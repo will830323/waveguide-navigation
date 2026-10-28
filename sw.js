@@ -1,6 +1,6 @@
 // Waveguide service worker: caches the app shell so it opens instantly and installs as an app.
 // Live data (map tiles, routes, search, reports) always goes to the network.
-const CACHE = "waveguide-v2";
+const CACHE = "waveguide-v3";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png",
   "https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.js",
   "https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.css"];

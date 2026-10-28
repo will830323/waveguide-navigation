@@ -21,8 +21,8 @@
 :root{
   --navy:#0f1d33; --navy-2:#1b2d4d; --copper:#c8743a; --copper-ink:#ffffff;
   --signal:#ffc21a; --signal-ink:#2b1f00; --danger:#e0412f; --ok:#1f9d6b;
-  --route:#2b7fff; --route-alt:#8f9bb0; --casing:#ffffff;
-  --bg:#e9edf3; --surface:#ffffff; --surface-2:#eff2f7; --fg:#0f1d33; --muted:#59657d; --line:#d8dee8;
+  --route:#1463ff; --route-alt:#7f93b5; --casing:#0a2a6b; --halo:#ffffff;
+  --bg:#e2f0fc; --surface:#ffffff; --surface-2:#eaf3fc; --fg:#0f1d33; --muted:#59657d; --line:#d8dee8;
   --shadow:0 8px 28px rgba(15,29,51,.22);
   --f-display:"Saira Semi Condensed","Arial Narrow",system-ui,sans-serif;
   --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -30,7 +30,7 @@
 }
 :root[data-theme="night"]{
   --navy:#0d1830; --navy-2:#1d3054;
-  --route:#4d97ff; --route-alt:#55637d; --casing:#0b1322;
+  --route:#3d8bff; --route-alt:#8a97ad; --casing:#ffffff; --halo:#0b1322;
   --bg:#0b1322; --surface:#16223a; --surface-2:#1f2d49; --fg:#e8eef8; --muted:#9aa8c2; --line:#2b3b5a;
   --shadow:0 8px 28px rgba(0,0,0,.55);
   color-scheme:dark;
@@ -124,6 +124,15 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--route);outline-
 .hz{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;border-radius:16px;background:var(--surface-2);font-size:12px;font-weight:700;text-align:center;line-height:1.15}
 .hz i{font-style:normal;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:24px;background:var(--surface)}
 
+/* map type picker */
+.mtgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.mt{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 4px 10px;border-radius:16px;border:2px solid var(--line);font-size:12px;font-weight:700;text-align:center}
+.mt.on{border-color:var(--route)}
+.mtsw{width:100%;aspect-ratio:1;max-width:72px;border-radius:12px;display:grid;place-items:center;font-size:26px}
+.mt-street{background:linear-gradient(135deg,#e2f0fc 55%,#8fc3ee 55%)}
+.mt-landmark{background:linear-gradient(135deg,#eef5fb 55%,#cfe8c4 55%)}
+.mt-satellite{background:linear-gradient(135deg,#3b5a3a,#6b7f52 50%,#1d3a5a)}
+.mt-dark{background:linear-gradient(135deg,#16223a 55%,#0b1322 55%)}
 /* lists (fuel, settings) */
 .list{display:flex;flex-direction:column}
 .li{display:flex;align-items:center;gap:12px;padding:12px 2px;border-top:1px solid var(--line);text-align:left;width:100%}
@@ -199,6 +208,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--route);outline-
 
 <!-- right-side buttons -->
 <div class="fabs" id="fabR">
+  <button class="fab" id="layersBtn" aria-label="Map type"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5z" fill="currentColor" fill-opacity=".15"/><path d="M3 12.5l9 5 9-5M3 16.5l9 5 9-5"/></svg></button>
   <button class="fab" id="compass" aria-label="Toggle heading-up / north-up"><svg viewBox="0 0 24 24"><path d="M12 2l4 10h-8z" fill="#e0412f"/><path d="M12 22l-4-10h8z" fill="currentColor" opacity=".55"/></svg></button>
   <button class="fab" id="voiceBtn" aria-label="Voice guidance on or off"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path id="voiceWaves" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/></svg></button>
   <button class="fab" id="locBtn" aria-label="Centre on my location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3.5" fill="currentColor"/><circle cx="12" cy="12" r="8"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/></svg></button>
@@ -254,6 +264,7 @@ const CFG = {
   overpass: "https://overpass-api.de/api/interpreter",
   styleDay: "https://tiles.openfreemap.org/styles/liberty",
   styleNight: "https://tiles.openfreemap.org/styles/dark",
+  styleLandmark: "https://tiles.openfreemap.org/styles/bright",
   bbox: [99.6, 0.85, 119.3, 7.4], // Peninsular + East Malaysia
 };
 const QUICK = [
@@ -291,7 +302,7 @@ const S = {
   nav:false, R:null, lastIdx:0, spoken:{}, alerted:{}, passed:{}, lastReroute:0, rerouting:false,
   follow:true, headUp:store.get("headUp", true),
   voice:store.get("voice", true), lang:store.get("lang","en"),
-  avoidTolls:store.get("avoidTolls", false), theme:store.get("theme","auto"),
+  avoidTolls:store.get("avoidTolls", false), mapType:store.get("maptype","street"),
   syncUrl:store.get("syncUrl",""), saved:store.get("saved",{}), recent:store.get("recent",[]),
   reports:[], myReports:store.get("myReports",0),
   sim:null, wake:null, limit:null, limitEst:false, slAt:0, slPos:null, lastBeep:0,
@@ -348,33 +359,79 @@ const T = {
 const L = () => T[S.lang] || T.en;
 const hzName = k => HZ[k][S.lang] || HZ[k].en;
 
-/* ---------------- theme + map ---------------- */
-function isNight(){ if(S.theme==="day") return false; if(S.theme==="night") return true; const h=new Date().getHours(); return h>=19 || h<7; }
-function applyTheme(){ document.documentElement.dataset.theme = isNight()?"night":"day"; }
+/* ---------------- map types ---------------- */
+// street = OpenFreeMap Liberty recoloured light blue · landmark = OpenFreeMap Bright (dense place icons)
+// satellite = Esri World Imagery + place/road labels · dark = OpenFreeMap Dark
+const MAPTYPES = {
+  street:   {label:"Light blue", ico:"🗺️", ui:"day"},
+  landmark: {label:"Landmarks",  ico:"🏛️", ui:"day"},
+  satellite:{label:"Satellite",  ico:"🛰️", ui:"night"},
+  dark:     {label:"Dark",       ico:"🌙", ui:"night"},
+};
+const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/";
+function satStyle(){ return {version:8, sources:{
+    img:{type:"raster", tiles:[ESRI+"World_Imagery/MapServer/tile/{z}/{y}/{x}"], tileSize:256, maxzoom:19, attribution:"Imagery © Esri, Maxar, Earthstar Geographics"},
+    roads:{type:"raster", tiles:[ESRI+"Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}"], tileSize:256, maxzoom:19},
+    places:{type:"raster", tiles:[ESRI+"Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"], tileSize:256, maxzoom:19}},
+  layers:[{id:"img",type:"raster",source:"img"},{id:"roads",type:"raster",source:"roads",paint:{"raster-opacity":.9}},{id:"places",type:"raster",source:"places"}]}; }
+function styleFor(t){ return t==="satellite" ? satStyle() : t==="landmark" ? CFG.styleLandmark : t==="dark" ? CFG.styleNight : CFG.styleDay; }
+function applyTheme(){ document.documentElement.dataset.theme = (MAPTYPES[S.mapType]||MAPTYPES.street).ui; }
+if(!MAPTYPES[S.mapType]) S.mapType="street";
 applyTheme();
-let nightStyleOk = true;
 const map = new maplibregl.Map({
-  container:"map", style: isNight()?CFG.styleNight:CFG.styleDay,
+  container:"map", style: styleFor(S.mapType),
   center:[101.6869,3.139], zoom:12, attributionControl:{compact:true},
   dragRotate:true, pitchWithRotate:true, maxPitch:65
 });
-map.on("error", e => {
-  // If the night style can't load, fall back to the day style once.
-  if(!S.styleReady && nightStyleOk && isNight()){ nightStyleOk=false; map.setStyle(CFG.styleDay); }
+map.on("error", () => {
+  // If a map type can't load, fall back to the light-blue street map once.
+  if(!S.styleReady && S.mapType!=="street"){ S.mapType="street"; applyTheme(); map.setStyle(styleFor("street"),{diff:false}); toast("That map type isn't reachable, so showing the street map."); }
 });
-map.on("style.load", () => { S.styleReady=true; addRouteLayers(); if(S.nav) drawNavRoute(); else if(S.routes.length) drawRoutes(); });
-function setMapStyle(){ applyTheme(); S.styleReady=false; map.setStyle(isNight()&&nightStyleOk?CFG.styleNight:CFG.styleDay); }
+map.on("style.load", () => { S.styleReady=true; tintMap(); addRouteLayers(); if(S.nav) drawNavRoute(); else if(S.routes.length) drawRoutes(); });
+function setMapType(t){ if(!MAPTYPES[t]) return; S.mapType=t; store.set("maptype",t); applyTheme(); S.styleReady=false; map.setStyle(styleFor(t),{diff:false}); toast(MAPTYPES[t].label+" map"); }
 
+// Recolour land/water/buildings light blue, widen roads, and make landmark icons and names larger.
+function scaleNum(v,k){
+  if(typeof v==="number") return v*k;
+  if(v && !Array.isArray(v) && Array.isArray(v.stops)) return {...v, stops:v.stops.map(([z,w])=>[z, typeof w==="number"?w*k:w])};
+  if(Array.isArray(v) && v[0]==="interpolate") return v.map((x,i)=> i>=4 && i%2===0 && typeof x==="number" ? x*k : x);
+  return v;
+}
+function tintMap(){
+  if(S.mapType==="satellite" || S.mapType==="dark") return;
+  const paint=(id,prop,val)=>{ try{ map.setPaintProperty(id,prop,val); }catch(e){} };
+  const layout=(id,prop,val)=>{ try{ map.setLayoutProperty(id,prop,val); }catch(e){} };
+  const blue = S.mapType==="street";
+  map.getStyle().layers.forEach(l => {
+    const id=l.id;
+    if(l.type==="background") paint(id,"background-color", blue?"#e2f0fc":"#eef5fb");
+    else if(l.type==="fill" && /^water|ocean|lake|river/i.test(id)) paint(id,"fill-color","#8fc3ee");
+    else if(l.type==="line" && /waterway|river/i.test(id)) paint(id,"line-color","#8fc3ee");
+    else if(blue && l.type==="fill" && /landuse|landcover|residential|industrial|commercial/i.test(id) && !/park|wood|grass|forest|wetland|cemetery|hospital|school/i.test(id)) paint(id,"fill-color","#d6e8f8");
+    else if(blue && l.type==="fill" && /building/i.test(id)) paint(id,"fill-color","#c5dcf2");
+    else if(blue && l.type==="fill-extrusion") paint(id,"fill-extrusion-color","#c5dcf2");
+    else if(l.type==="line" && /road|highway|bridge|tunnel|street|motorway|trunk|primary|secondary|tertiary|minor/i.test(id) && !/rail|path|footway|cycle|ferry|aeroway|oneway|label/i.test(id)){
+      const w=map.getPaintProperty(id,"line-width"); if(w!=null) paint(id,"line-width",scaleNum(w,1.45));
+    }
+    else if(l.type==="symbol" && /poi|landmark|place_of_worship|station|airport/i.test(id)){
+      const ts=map.getLayoutProperty(id,"text-size"), is=map.getLayoutProperty(id,"icon-size");
+      layout(id,"text-size",scaleNum(ts??12,1.2)); layout(id,"icon-size",scaleNum(is??1,1.25));
+    }
+  });
+}
 function addRouteLayers(){
   if(map.getSource("routes")) return;
   map.addSource("routes",{type:"geojson",data:{type:"FeatureCollection",features:[]}});
   const before = map.getStyle().layers.find(l => l.type==="symbol")?.id; // keep labels above the route
+  const W = (a,b,c,d) => ["interpolate",["exponential",1.4],["zoom"],8,a,13,b,16,c,19,d];
   map.addLayer({id:"alt-line",type:"line",source:"routes",filter:["==",["get","sel"],false],
-    layout:{"line-join":"round","line-cap":"round"},paint:{"line-color":cssVar("--route-alt"),"line-width":["interpolate",["linear"],["zoom"],8,4,16,9],"line-opacity":.9}}, before);
+    layout:{"line-join":"round","line-cap":"round"},paint:{"line-color":cssVar("--route-alt"),"line-width":W(5,8,13,20),"line-opacity":.95}}, before);
+  map.addLayer({id:"sel-halo",type:"line",source:"routes",filter:["==",["get","sel"],true],
+    layout:{"line-join":"round","line-cap":"round"},paint:{"line-color":cssVar("--halo"),"line-width":W(11,16,26,38),"line-opacity":.85}}, before);
   map.addLayer({id:"sel-casing",type:"line",source:"routes",filter:["==",["get","sel"],true],
-    layout:{"line-join":"round","line-cap":"round"},paint:{"line-color":cssVar("--casing"),"line-width":["interpolate",["linear"],["zoom"],8,7,16,15]}}, before);
+    layout:{"line-join":"round","line-cap":"round"},paint:{"line-color":cssVar("--casing"),"line-width":W(8,12,20,30)}}, before);
   map.addLayer({id:"sel-line",type:"line",source:"routes",filter:["==",["get","sel"],true],
-    layout:{"line-join":"round","line-cap":"round"},paint:{"line-color":cssVar("--route"),"line-width":["interpolate",["linear"],["zoom"],8,4.5,16,10]}}, before);
+    layout:{"line-join":"round","line-cap":"round"},paint:{"line-color":cssVar("--route"),"line-width":W(5,8,14,22)}}, before);
   map.on("click","alt-line", e => { if(S.nav) return; const i=e.features?.[0]?.properties?.i; if(i!=null){ S.sel=+i; drawRoutes(); renderRouteSheet(); } });
 }
 function setRouteData(features){ const src=map.getSource("routes"); if(src) src.setData({type:"FeatureCollection",features}); }
@@ -603,7 +660,7 @@ function sheetH(){ const s=$("sheet"); return s.classList.contains("closed")?0:s
 function tripH(){ return $("tripbar").offsetHeight||84; }
 function setSheetVar(px){ document.documentElement.style.setProperty("--sheet-h", px+"px");
   // tall sheets: tuck the floating buttons away so they never collide with the search bar
-  const tall = px > innerHeight - 340; $("fabR").style.visibility = tall?"hidden":""; $("speedo").style.visibility = tall?"hidden":""; }
+  const tall = px > innerHeight - 420; $("fabR").style.visibility = tall?"hidden":""; $("speedo").style.visibility = tall?"hidden":""; }
 function afterSheet(){ if(S.nav) closeSheet(); else if(S.routes.length) renderRouteSheet(); else closeSheet(); }
 
 /* ---------------- instructions ---------------- */
@@ -849,7 +906,7 @@ function openSettings(){
     '<div class="li"><span class="tx"><b>Voice guidance</b><span>Turn-by-turn and hazard warnings</span></span>'+sw("setVoice",S.voice)+'</div>'+
     '<div class="li"><span class="tx"><b>Avoid tolls</b><span>Picks a toll-free route when one is found</span></span>'+sw("setToll",S.avoidTolls)+'</div>'+
     '<div class="li"><span class="tx"><b>Heading-up 3D view</b><span>Map turns with you while driving</span></span>'+sw("setHead",S.headUp)+'</div>'+
-    '<div class="li"><span class="tx"><b>Map colours</b><span>Auto switches to night at 7 pm</span></span>'+seg("setTheme",[["auto","Auto"],["day","Day"],["night","Night"]],S.theme)+'</div>'+
+    '<div class="li" style="display:block"><b>Map type</b><span style="display:block;margin-bottom:8px">Also on the map button beside the compass</span>'+seg("setMapT",Object.entries(MAPTYPES).map(([k,v])=>[k,v.label]),S.mapType)+'</div>'+
     '<div class="li" style="display:block"><b>Shared reports</b><span style="display:block">Paste a Firebase Realtime Database URL so everyone using it sees the same reports. Leave empty to keep reports on this phone.</span>'+
       '<input class="field" id="setSync" type="url" inputmode="url" placeholder="https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app" value="'+esc(S.syncUrl)+'"></div>'+
     '<div class="li"><span class="tx"><b>Clear history</b><span>Recent places, Home and Work</span></span><button class="btn sm warn" id="setClear">Clear</button></div>'+
@@ -861,13 +918,21 @@ function openSettings(){
   swBind("setVoice",on=>{ S.voice=on; store.set("voice",on); paintVoice(); });
   swBind("setToll",on=>{ S.avoidTolls=on; store.set("avoidTolls",on); });
   swBind("setHead",on=>{ S.headUp=on; store.set("headUp",on); });
-  segBind("setTheme",v=>{ S.theme=v; store.set("theme",v); setMapStyle(); });
+  segBind("setMapT",v=>setMapType(v));
   $("setSync").onchange=e=>{ S.syncUrl=e.target.value.trim(); store.set("syncUrl",S.syncUrl);
     if(S.syncUrl && !Sync.base()) toast("That doesn't look like a Firebase database URL."); else { toast(S.syncUrl?"Shared reports on":"Reports stay on this phone"); loadReports(); } };
   $("setClear").onclick=()=>{ S.recent=[]; S.saved={}; store.set("recent",[]); store.set("saved",{}); renderChips(); toast("History cleared"); };
   $("setDone").onclick=()=>{ $("setSync").dispatchEvent(new Event("change")); afterSheet(); };
 }
 $("setBtn").onclick=openSettings;
+function openMapTypes(){
+  let h='<div class="grab"></div><div class="hd"><h2>Map type</h2><p>Choose how the map looks. Your route stays on top.</p></div><div class="mtgrid">';
+  Object.entries(MAPTYPES).forEach(([k,v])=> h+='<button class="mt'+(k===S.mapType?' on':'')+'" data-mt="'+k+'"><span class="mtsw mt-'+k+'">'+v.ico+'</span>'+v.label+'</button>');
+  h+='</div><p class="hint">Landmarks shows more shops, malls, mosques, temples, hospitals and petrol stations. Satellite imagery © Esri.</p>';
+  openSheet(h);
+  document.querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>{ setMapType(b.dataset.mt); afterSheet(); });
+}
+$("layersBtn").onclick=openMapTypes;
 
 /* ---------------- buttons ---------------- */
 $("reportBtn").onclick=openReport;
@@ -882,7 +947,6 @@ $("voiceBtn").onclick=()=>{ S.voice=!S.voice; store.set("voice",S.voice); paintV
 /* ---------------- boot ---------------- */
 paintVoice(); renderChips(); loadReports(); startGPS();
 setInterval(loadReports, 30000);
-setInterval(()=>{ if(S.theme==="auto" && (document.documentElement.dataset.theme==="night")!==isNight()) setMapStyle(); }, 60000);
 if("serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 if(location.protocol==="file:") setTimeout(()=>toast("Open this over https (e.g. GitHub Pages) so your phone allows GPS."),1500);
 </script>
