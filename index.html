@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#0f1d33">
+<meta name="theme-color" content="#0b3b2e">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Waveguide">
 <title>Waveguide</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="icon" href="logo-96.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -52,8 +52,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--route);outline-
   display:flex;flex-direction:column;gap:8px}
 #top>*{pointer-events:auto}
 .search{display:flex;align-items:center;gap:6px;background:var(--surface);border-radius:999px;box-shadow:var(--shadow);padding:5px 5px 5px 8px}
-.mark{flex:none;width:36px;height:36px;border-radius:50%;background:var(--navy);display:grid;place-items:center}
-.mark svg{width:22px;height:22px}
+.mark{flex:none;width:36px;height:36px;border-radius:10px;display:block}
 .search input{flex:1;min-width:0;border:0;background:transparent;color:var(--fg);font:700 17px var(--f-body);padding:8px 4px;outline:none}
 .search input::placeholder{color:var(--muted);font-weight:400}
 .ib{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:18px;color:var(--muted)}
@@ -150,6 +149,18 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--route);outline-
 .sw.on::after{transform:translateX(18px)}
 .field{width:100%;margin-top:8px;padding:11px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface-2);color:var(--fg);font:14px var(--f-body)}
 
+/* travel modes + route preferences */
+.modes{display:flex;gap:6px;margin:0 0 8px;overflow-x:auto;scrollbar-width:none}
+.modes::-webkit-scrollbar{display:none}
+.mode{flex:none;display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:var(--surface-2);font-weight:700;font-size:13px}
+.mode.on{background:var(--navy);color:#fff}
+.prefs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
+.pref{padding:6px 11px;border-radius:999px;border:1.5px solid var(--line);font-size:12px;font-weight:700;color:var(--muted)}
+.pref.on{border-color:var(--route);color:var(--route);background:color-mix(in srgb,var(--route) 8%,var(--surface))}
+.tag.traffic{background:var(--danger);color:#fff}
+.tag.flow{background:var(--ok);color:#fff}
+.tag.info{background:var(--surface-2);color:var(--fg)}
+
 /* ---------- navigation ---------- */
 #navtop{position:fixed;z-index:700;left:0;right:0;top:0;
   padding:calc(env(safe-area-inset-top,0px) + 8px) max(10px,env(safe-area-inset-right,0px)) 0 max(10px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:6px;align-items:flex-start;pointer-events:none}
@@ -175,6 +186,15 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--route);outline-
 .dd2{flex:none;text-align:right;font:700 15px var(--f-display);font-variant-numeric:tabular-nums;display:flex;flex-direction:column}
 .dd2 small{font:400 11px var(--f-body);color:var(--muted)}
 .then{display:inline-flex;gap:6px;align-items:center;background:var(--navy-2);color:#fff;font:600 14px var(--f-display);padding:6px 12px;border-radius:10px;box-shadow:var(--shadow)}
+#lanes{display:flex;gap:4px;background:var(--navy-2);padding:6px 10px;border-radius:12px;box-shadow:var(--shadow)}
+.lane{width:34px;height:38px;display:grid;place-items:center;border-radius:8px;opacity:.32}
+.lane.ok{opacity:1;background:rgba(255,255,255,.16)}
+.lane svg{width:26px;height:26px}
+#prog{position:fixed;z-index:640;left:max(24px,calc(env(safe-area-inset-left,0px) + 12px));top:calc(env(safe-area-inset-top,0px) + 200px);bottom:calc(env(safe-area-inset-bottom,0px) + var(--sheet-h,0px) + 180px);width:12px;border-radius:999px;background:var(--route);box-shadow:0 0 0 3px var(--surface),var(--shadow)}
+#progDone{position:absolute;left:0;right:0;bottom:0;border-radius:999px;background:#9aa6ba}
+#progCar{position:absolute;left:50%;width:22px;height:22px;margin:0 0 -11px -11px;border-radius:50%;background:var(--surface);border:4px solid var(--route);box-shadow:var(--shadow)}
+#progFlag{position:absolute;top:-22px;left:50%;transform:translateX(-50%);font-size:16px}
+.pmark{position:absolute;left:50%;transform:translate(-50%,50%);font-size:15px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
 #alert{align-self:stretch;background:var(--signal);color:var(--signal-ink);border-radius:16px;padding:10px 12px;font:700 16px var(--f-display);box-shadow:var(--shadow);display:flex;gap:10px;align-items:center}
 #alert .ae{font-size:26px}
 #alert .at{flex:1;min-width:0}
@@ -188,9 +208,40 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--route);outline-
 .tb svg{width:22px;height:22px}
 .tb.end{width:auto;padding:0 18px;border-radius:999px;background:var(--danger);color:#fff;font-weight:700}
 
+/* friends, HUD, mic, settings sections */
+#friends{display:flex;flex-direction:column;gap:6px}
+.friend-row{display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:14px;box-shadow:0 2px 10px rgba(15,29,51,.16);padding:8px 12px;text-align:left;width:100%}
+.friend-row b{font-weight:700}
+.friend-row span{color:var(--muted);font-size:12px}
+.friend{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer}
+.friend .car{width:34px;height:34px;border-radius:50%;background:var(--copper);border:3px solid #fff;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.friend .car svg{width:18px;height:18px}
+.friend .nm{background:var(--navy);color:#fff;font:700 11px var(--f-body);padding:2px 7px;border-radius:999px;white-space:nowrap}
+.ib.listening,.fab.listening{background:var(--danger);color:#fff;animation:pulse 1s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 8px color-mix(in srgb,var(--danger) 30%,transparent)}}
+#hud{position:fixed;inset:0;z-index:960;background:#000;color:#41ff9a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4vh;padding:20px}
+#hudIn{display:flex;flex-direction:column;align-items:center;gap:3vh;font-family:var(--f-display)}
+#hudIn.mirror{transform:scaleY(-1)}
+.hud-spd{font:700 min(34vw,30vh)/1 var(--f-display);font-variant-numeric:tabular-nums}
+.hud-spd.over{color:#ff4b3a}
+.hud-man{display:flex;align-items:center;gap:4vw;font:700 min(12vw,10vh)/1 var(--f-display)}
+.hud-man svg{width:min(16vw,13vh);height:min(16vw,13vh)}
+.hud-man svg path,.hud-man svg circle{stroke:#41ff9a}
+.hud-ins{font:600 min(6vw,5vh) var(--f-display);text-align:center}
+.hud-eta{font:600 min(5vw,4vh) var(--f-display);opacity:.8}
+.hud-ctl{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);display:flex;gap:10px}
+.hud-ctl button{padding:10px 16px;border-radius:999px;background:#1b1b1b;color:#ddd;font-weight:700}
+.sec{font:600 12px var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:16px 2px 2px}
+.pts{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:var(--navy);color:#fff;margin-bottom:4px}
+.pts b{font:700 26px var(--f-display);font-variant-numeric:tabular-nums}
+.pts span{opacity:.8;font-size:13px}
+.plan-leave{font:700 30px var(--f-display);font-variant-numeric:tabular-nums}
+
 /* ---------- markers ---------- */
 .me{width:44px;height:44px}
 .me svg{width:44px;height:44px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.35))}
+.hzpin.tt{border-color:var(--danger)}
+.hzpin.osm{border-color:#9aa6ba;width:32px;height:32px;font-size:16px}
 .hzpin{width:40px;height:40px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font-size:21px;box-shadow:0 3px 10px rgba(0,0,0,.3);border:3px solid var(--signal);cursor:pointer}
 .destpin{width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--danger);border:4px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.4)}
 .stoppin{width:22px;height:22px;border-radius:50%;background:var(--copper);border:4px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4)}
@@ -211,17 +262,20 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--route);outline-
 <!-- idle: search -->
 <div id="top">
   <div class="search">
-    <span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 15c2.2 0 2.2-6 4.5-6s2.2 6 4.5 6 2.2-6 4.5-6S18.8 15 21 15" fill="none" stroke="#c8743a" stroke-width="2.6" stroke-linecap="round"/></svg></span>
+    <img class="mark" src="logo-96.png" alt="" width="36" height="36">
     <input id="q" type="search" placeholder="Where to?" autocomplete="off" enterkeyhint="search" aria-label="Search destination">
     <button class="ib" id="clearQ" aria-label="Clear search" hidden>✕</button>
+    <button class="ib" id="micBtn" aria-label="Voice command"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor" fill-opacity=".15"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
     <button class="ib" id="setBtn" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg></button>
   </div>
   <div id="results" hidden></div>
   <div class="chips" id="chips"></div>
+  <div id="friends"></div>
 </div>
 
 <!-- right-side buttons -->
 <div class="fabs" id="fabR">
+  <button class="fab" id="micFab" aria-label="Voice command" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor" fill-opacity=".15"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
   <button class="fab" id="layersBtn" aria-label="Map type"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5z" fill="currentColor" fill-opacity=".15"/><path d="M3 12.5l9 5 9-5M3 16.5l9 5 9-5"/></svg></button>
   <button class="fab" id="compass" aria-label="Toggle heading-up / north-up"><svg viewBox="0 0 24 24"><path d="M12 2l4 10h-8z" fill="#e0412f"/><path d="M12 22l-4-10h8z" fill="currentColor" opacity=".55"/></svg></button>
   <button class="fab" id="voiceBtn" aria-label="Voice guidance on or off"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path id="voiceWaves" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/></svg></button>
@@ -249,17 +303,29 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--route);outline-
     </div>
     <span class="manlist" aria-hidden="true">☰</span>
   </div>
+  <div id="lanes" hidden></div>
   <div class="then" id="navThen" hidden></div>
   <div id="alert" hidden></div>
 </div>
+<div id="prog" hidden><span id="progFlag">🏁</span><div id="progDone"></div><div id="progMarks"></div><div id="progCar"></div></div>
 <div id="tripbar" hidden>
   <div class="eta">
     <div class="big" id="etaClock">--:--</div>
     <div class="sub" id="etaSub">—</div>
   </div>
-  <button class="tb" id="navFuel" aria-label="Add a petrol stop">⛽</button>
+  <button class="tb" id="navFuel" aria-label="Find places nearby">🔎</button>
   <button class="tb" id="navShare" aria-label="Share ETA"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></svg></button>
   <button class="tb end" id="endBtn">End</button>
+</div>
+
+<div id="hud" hidden>
+  <div id="hudIn" class="mirror">
+    <div class="hud-spd" id="hudSpd">0</div>
+    <div class="hud-man"><span id="hudArrow"></span><span id="hudDist"></span></div>
+    <div class="hud-ins" id="hudIns"></div>
+    <div class="hud-eta" id="hudEta"></div>
+  </div>
+  <div class="hud-ctl"><button id="hudMirror">Mirror on/off</button><button id="hudExit">Exit HUD</button></div>
 </div>
 
 <div id="toast" role="status"></div>
@@ -281,6 +347,15 @@ const CFG = {
   styleNight: "https://tiles.openfreemap.org/styles/dark",
   styleLandmark: "https://tiles.openfreemap.org/styles/bright",
   bbox: [99.6, 0.85, 119.3, 7.4], // Peninsular + East Malaysia
+  valhalla: "https://valhalla1.openstreetmap.de/route",
+  tomtom: "https://api.tomtom.com",
+};
+// osrm: OSRM-compatible server for the mode (null = Valhalla only). valhalla: Valhalla costing. sim: test-drive speed (m/s).
+const MODES = {
+  car: {label:"Car",        ico:"🚗", osrm:"https://router.project-osrm.org/route/v1/driving/", valhalla:"auto", sim:19},
+  moto:{label:"Motorcycle", ico:"🏍️", osrm:null, valhalla:"motorcycle", sim:17},
+  bike:{label:"Bicycle",    ico:"🚲", osrm:"https://routing.openstreetmap.de/routed-bike/route/v1/driving/", valhalla:"bicycle", sim:7},
+  foot:{label:"Walk",       ico:"🚶", osrm:"https://routing.openstreetmap.de/routed-foot/route/v1/driving/", valhalla:"pedestrian", sim:5},
 };
 const QUICK = [
   {name:"KLCC", sub:"Kuala Lumpur", lat:3.1579, lng:101.7116},
@@ -294,13 +369,18 @@ const QUICK = [
 const HZ = {
   police:  {e:"👮", en:"Police",         ms:"Polis",          zh:"警察",   ttl:60,    delay:0},
   accident:{e:"💥", en:"Accident",       ms:"Kemalangan",     zh:"车祸",   ttl:120,   delay:8},
-  jam:     {e:"🚦", en:"Traffic jam",    ms:"Kesesakan",      zh:"塞车",   ttl:60,    delay:6},
+  jam:     {e:"🚗", en:"Traffic jam",    ms:"Kesesakan",      zh:"塞车",   ttl:60,    delay:6},
   flood:   {e:"🌊", en:"Flood",          ms:"Banjir",         zh:"水灾",   ttl:360,   delay:15},
   works:   {e:"🚧", en:"Roadworks",      ms:"Kerja jalan",    zh:"道路施工", ttl:1440,  delay:3},
   pothole: {e:"🕳️", en:"Pothole",        ms:"Lubang jalan",   zh:"路面坑洞", ttl:4320,  delay:0},
   camera:  {e:"📷", en:"Speed camera",   ms:"Kamera AWAS",    zh:"测速相机", ttl:43200, delay:0},
   object:  {e:"⚠️", en:"Object on road", ms:"Objek di jalan", zh:"路上有障碍物", ttl:60, delay:1},
+  closed:  {e:"🚫", en:"Road closed",    ms:"Jalan ditutup",  zh:"道路封闭", ttl:1440, delay:20},
+  weather: {e:"🌧️", en:"Bad weather",    ms:"Cuaca buruk",    zh:"恶劣天气", ttl:180,  delay:2},
 };
+const USER_HZ = ["police","accident","jam","flood","works","pothole","camera","object","closed"]; // what drivers can report
+// TomTom incident iconCategory → our hazard type
+const TT_ICON = {1:"accident",2:"weather",3:"object",4:"weather",5:"weather",6:"jam",7:"works",8:"closed",9:"works",10:"weather",11:"flood",14:"object"};
 // Fallback limits (km/h) when OpenStreetMap has no maxspeed tag — shown with a dashed ring.
 const MY_DEFAULT_LIMIT = {motorway:110, motorway_link:60, trunk:90, trunk_link:60, primary:80, primary_link:50, secondary:70, tertiary:60, unclassified:50, residential:40, living_street:20};
 
@@ -317,7 +397,10 @@ const S = {
   nav:false, R:null, lastIdx:0, spoken:{}, alerted:{}, passed:{}, lastReroute:0, rerouting:false,
   follow:true, headUp:store.get("headUp", true),
   voice:store.get("voice", true), lang:store.get("lang","en"),
-  avoidTolls:store.get("avoidTolls", false), mapType:store.get("maptype","street"),
+  avoidTolls:store.get("avoidTolls", false), avoidHw:store.get("avoidHw", false), shortest:store.get("shortest", false),
+  mode:store.get("mode","car"), ttKey:store.get("ttKey",""), traffic:store.get("traffic", true), incidents:[], view:"",
+  lastBetter:0, progBuilt:0, mapType:store.get("maptype","street"),
+  points:store.get("points",0), myName:store.get("myName",""), plans:store.get("plans",[]), hud:false, hudMirror:store.get("hudMirror",true), parkOffered:false,
   syncUrl:store.get("syncUrl",""), saved:store.get("saved",{}), recent:store.get("recent",[]),
   reports:[], myReports:store.get("myReports",0),
   sim:null, wake:null, limit:null, limitEst:false, slAt:0, slPos:null, lastBeep:0,
@@ -352,6 +435,7 @@ const T = {
        ramp:"Take the ramp", merge:"Merge", rb:n=>"At the roundabout, take exit "+n, rbx:"Exit the roundabout",
        inX:d=>"In "+d+", ", reroute:"Recalculating route", start:"Starting navigation", then:"Then: ",
        ahead:n=>n+" reported ahead", stillThere:"Still there?", speeding:"Slow down",
+       faster:n=>"Faster route found. It saves "+n+" minutes", switched:"Switched to the faster route", camAhead:l=>"Speed camera ahead"+(l?", limit "+l:""),
        dist:m=>{ if(m>=950){const k=Math.round(m/100)/10; return k+(k===1?" kilometre":" kilometres");} return Math.max(100,Math.round(m/100)*100)+" metres"; },
        voices:["en-MY","en-GB","en-SG","en-US","en"], label:"EN" },
   ms:{ mod:{left:"Belok kiri",right:"Belok kanan","slight left":"Ikut kiri","slight right":"Ikut kanan","sharp left":"Belok tajam ke kiri","sharp right":"Belok tajam ke kanan",uturn:"Buat pusingan U",straight:"Terus"},
@@ -360,6 +444,7 @@ const T = {
        ramp:"Masuk susur", merge:"Bergabung", rb:n=>"Di bulatan, ambil susur keluar ke-"+n, rbx:"Keluar dari bulatan",
        inX:d=>"Dalam "+d+", ", reroute:"Mengira semula laluan", start:"Navigasi dimulakan", then:"Kemudian: ",
        ahead:n=>n+" dilaporkan di hadapan", stillThere:"Masih ada?", speeding:"Perlahankan kenderaan",
+       faster:n=>"Laluan lebih pantas dijumpai. Jimat "+n+" minit", switched:"Laluan lebih pantas dipilih", camAhead:l=>"Kamera had laju di hadapan"+(l?", had "+l:""),
        dist:m=>{ if(m>=950) return (Math.round(m/100)/10)+" kilometer"; return Math.max(100,Math.round(m/100)*100)+" meter"; },
        voices:["ms-MY","ms","id-ID"], label:"BM" },
   zh:{ mod:{left:"左转",right:"右转","slight left":"稍向左行驶","slight right":"稍向右行驶","sharp left":"向左急转","sharp right":"向右急转",uturn:"掉头",straight:"直行"},
@@ -368,6 +453,7 @@ const T = {
        ramp:"驶入匝道", merge:"并道", rb:n=>"在环岛从第"+n+"个出口驶出", rbx:"驶出环岛",
        inX:d=>d+"后，", reroute:"正在重新规划路线", start:"开始导航", then:"然后：",
        ahead:n=>"前方有"+n, stillThere:"还在吗？", speeding:"您已超速",
+       faster:n=>"发现更快的路线，可节省"+n+"分钟", switched:"已切换到更快的路线", camAhead:l=>"前方有测速相机"+(l?"，限速"+l:""),
        dist:m=>{ if(m>=950) return (Math.round(m/100)/10)+"公里"; return Math.max(100,Math.round(m/100)*100)+"米"; },
        voices:["zh-CN","zh-SG","zh-TW","zh-HK","zh"], label:"中文" },
 };
@@ -402,7 +488,7 @@ map.on("error", () => {
   // If a map type can't load, fall back to the light-blue street map once.
   if(!S.styleReady && S.mapType!=="street"){ S.mapType="street"; applyTheme(); map.setStyle(styleFor("street"),{diff:false}); toast("That map type isn't reachable, so showing the street map."); }
 });
-map.on("style.load", () => { S.styleReady=true; tintMap(); addRouteLayers(); if(S.nav) drawNavRoute(); else if(S.routes.length) drawRoutes(); });
+map.on("style.load", () => { S.styleReady=true; tintMap(); addTrafficLayer(); addRouteLayers(); if(S.nav) drawNavRoute(); else if(S.routes.length) drawRoutes(); });
 function setMapType(t){ if(!MAPTYPES[t]) return; S.mapType=t; store.set("maptype",t); applyTheme(); S.styleReady=false; map.setStyle(styleFor(t),{diff:false}); toast(MAPTYPES[t].label+" map"); }
 
 // Recolour land/water/buildings light blue, widen roads, and make landmark icons and names larger.
@@ -449,6 +535,16 @@ function addRouteLayers(){
     layout:{"line-join":"round","line-cap":"round"},paint:{"line-color":cssVar("--route"),"line-width":W(5,8,14,22)}}, before);
   map.on("click","alt-line", e => { if(S.nav) return; const i=e.features?.[0]?.properties?.i; if(i!=null){ S.sel=+i; drawRoutes(); renderRouteSheet(); } });
 }
+function addTrafficLayer(){
+  if(!S.ttKey || !S.traffic || map.getSource("ttflow")) return;
+  const dark = S.mapType==="dark" || S.mapType==="satellite";
+  map.addSource("ttflow",{type:"raster", tileSize:256, maxzoom:22, attribution:"Traffic © TomTom",
+    tiles:[CFG.tomtom+"/traffic/map/4/tile/flow/"+(dark?"relative0-dark":"relative0")+"/{z}/{x}/{y}.png?key="+encodeURIComponent(S.ttKey)+"&tileSize=256"]});
+  const before = map.getLayer("alt-line") ? "alt-line" : map.getStyle().layers.find(l=>l.type==="symbol")?.id;
+  map.addLayer({id:"ttflow",type:"raster",source:"ttflow",paint:{"raster-opacity":.9}}, before);
+}
+function setTraffic(on){ S.traffic=on; store.set("traffic",on);
+  if(!on){ if(map.getLayer("ttflow")) map.removeLayer("ttflow"); if(map.getSource("ttflow")) map.removeSource("ttflow"); } else addTrafficLayer(); }
 function setRouteData(features){ const src=map.getSource("routes"); if(src) src.setData({type:"FeatureCollection",features}); }
 
 // user moves the map → stop following
@@ -492,8 +588,9 @@ function onPos(p, heading, speed){
   const kmh = S.speed*3.6;
   $("speedo").hidden = !(S.nav || kmh>5);
   $("spd").textContent = Math.round(kmh);
+  if(S.hud) paintHud();
   checkSpeed(kmh);
-  if(S.nav || kmh>5) speedLimit(p);
+  if(motorised() && (S.nav || kmh>5)) speedLimit(p);
   if(S.nav){ navTick(p); if(S.follow) followCam(p, kmh); }
 }
 function followCam(p, kmh){
@@ -543,20 +640,20 @@ $("clearQ").onclick = () => { $("q").value=""; $("clearQ").hidden=true; showSugg
 document.addEventListener("pointerdown", e => { if(!$("top").contains(e.target)) $("results").hidden=true; });
 function closeSearch(){ $("results").hidden=true; $("q").blur(); if(S.searchMode==="stop"){ S.searchMode="dest"; $("q").placeholder="Where to?"; } }
 
-async function search(v){
-  if(!v) return;
+async function search(v){ if(!v) return; const list=await searchPlaces(v); if(list) showResults(list); }
+async function searchPlaces(v){
   const m = v.match(/^\s*(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)\s*$/);
-  if(m){ showResults([{name:"Coordinates", sub:v, lat:+m[1], lng:+m[3]}]); return; }
+  if(m) return [{name:"Coordinates", sub:v, lat:+m[1], lng:+m[3]}];
   qAbort?.abort(); qAbort=new AbortController();
   const c = S.pos || {lat:map.getCenter().lat, lng:map.getCenter().lng};
   const url = CFG.photon+"?q="+encodeURIComponent(v)+"&limit=8&lat="+c.lat+"&lon="+c.lng+"&bbox="+CFG.bbox.join(",");
   try{
     const j = await (await fetch(url,{signal:qAbort.signal})).json();
-    showResults((j.features||[]).map(f => { const p=f.properties;
+    return ((j.features||[]).map(f => { const p=f.properties;
       const sub=[p.street&&((p.housenumber?p.housenumber+" ":"")+p.street), p.district||p.locality, p.city, p.state].filter(Boolean);
       const pt={lat:f.geometry.coordinates[1], lng:f.geometry.coordinates[0]};
       return {name:p.name||p.street||"Unnamed place", sub:[...new Set(sub)].join(", "), ...pt, far: S.pos?hav(S.pos,pt):null}; }));
-  }catch(e){ if(e.name!=="AbortError") toast("Search isn't reachable right now. Check your connection."); }
+  }catch(e){ if(e.name!=="AbortError") toast("Search isn't reachable right now. Check your connection."); return null; }
 }
 function resultRow(r, ico){ const b=document.createElement("button");
   b.innerHTML='<span class="ico">'+ico+'</span><span class="tx"><b>'+esc(r.name)+'</b><span class="s">'+esc(r.sub||"")+'</span></span>'+(r.far!=null?'<span class="s" style="color:var(--muted);font-size:13px">'+fmtDist(r.far)+'</span>':'');
@@ -570,6 +667,9 @@ function showSuggestions(){
   const box=$("results"); box.innerHTML="";
   const saved=["home","work"].filter(k=>S.saved[k]).map(k=>({...S.saved[k], ico:k==="home"?"🏠":"🏢"}));
   if(saved.length){ box.insertAdjacentHTML("beforeend",'<div class="lh">Saved</div>'); saved.forEach(r=>box.appendChild(resultRow(r,r.ico))); }
+  const plans=S.plans.filter(p=>p.arrive>Date.now());
+  if(plans.length){ box.insertAdjacentHTML("beforeend",'<div class="lh">Planned drives</div>');
+    plans.forEach(p=>box.appendChild(resultRow({...p.dest, sub:"Leave "+dayTime(p.leave)+" · arrive "+dayTime(p.arrive)},"🕒"))); }
   if(S.recent.length){ box.insertAdjacentHTML("beforeend",'<div class="lh">Recent</div>'); S.recent.forEach(r=>box.appendChild(resultRow(r,"🕘"))); }
   box.hidden = !box.children.length;
 }
@@ -585,17 +685,84 @@ function renderChips(){
   const add=(txt,cls,fn)=>{ const b=document.createElement("button"); b.className="chip "+cls; b.textContent=txt; b.onclick=fn; c.appendChild(b); };
   if(S.saved.home) add("🏠 Home","saved",()=>setDest(S.saved.home));
   if(S.saved.work) add("🏢 Work","saved",()=>setDest(S.saved.work));
-  add("⛽ Petrol nearby","fuel",()=>openFuel());
+  add("🔎 Nearby","fuel",()=>openNearby());
+  add("⛽ Petrol","",()=>openPlaces("fuel")); add("🅿️ Parking","",()=>openPlaces("parking")); add("🍜 Food","",()=>openPlaces("food"));
   QUICK.forEach(q=>add(q.name,"",()=>setDest(q)));
 }
 
 /* ---------------- routing ---------------- */
+const motorised = () => S.mode==="car" || S.mode==="moto";
+function withTimeout(p, ms){ return Promise.race([p, new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),ms))]); }
 async function fetchRoutes(from, stops, to){
+  const M = MODES[S.mode] || MODES.car;
+  // Valhalla handles motorcycles and the avoid/shortest preferences; OSRM gives richer lane data for everything else.
+  const wantV = !M.osrm || (motorised() && (S.avoidTolls || S.avoidHw || S.shortest));
+  let routes = null;
+  if(wantV){
+    try{ routes = await valhallaRoutes(from, stops, to, M.valhalla); }
+    catch(e){ if(!M.osrm) throw e; toast("Route preferences aren't reachable right now, so showing standard routes."); }
+  }
+  if(!routes) routes = await osrmRoutes(M.osrm, from, stops, to);
+  if(motorised() && S.ttKey) await withTimeout(applyTraffic(routes, from, stops, to), 6000).catch(()=>{});
+  return routes;
+}
+async function osrmRoutes(base, from, stops, to){
   const pts=[from,...stops,to].map(p=>p.lng.toFixed(6)+","+p.lat.toFixed(6)).join(";");
-  const url=CFG.osrm+pts+"?overview=full&geometries=geojson&steps=true"+(stops.length?"":"&alternatives=3");
+  const url=base+pts+"?overview=full&geometries=geojson&steps=true"+(stops.length?"":"&alternatives=3");
   const j = await (await fetch(url)).json();
-  if(j.code!=="Ok" || !j.routes?.length) throw new Error(j.message||"No driving route found.");
+  if(j.code!=="Ok" || !j.routes?.length) throw new Error(j.message||"No route found.");
   return j.routes.map(prep);
+}
+// Valhalla → the same step shape OSRM returns, so the rest of the app doesn't care which router answered.
+function decode6(str){ let i=0, lat=0, lng=0; const out=[];
+  while(i<str.length){ let b, sh=0, r=0; do{ b=str.charCodeAt(i++)-63; r|=(b&31)<<sh; sh+=5; }while(b>=32); lat+=(r&1)?~(r>>1):(r>>1);
+    sh=0; r=0; do{ b=str.charCodeAt(i++)-63; r|=(b&31)<<sh; sh+=5; }while(b>=32); lng+=(r&1)?~(r>>1):(r>>1);
+    out.push([lng/1e6, lat/1e6]); } return out; }
+const VT = {1:["depart","straight"],2:["depart","right"],3:["depart","left"],4:["arrive","straight"],5:["arrive","right"],6:["arrive","left"],
+  7:["new name","straight"],8:["continue","straight"],9:["turn","slight right"],10:["turn","right"],11:["turn","sharp right"],12:["turn","uturn"],13:["turn","uturn"],
+  14:["turn","sharp left"],15:["turn","left"],16:["turn","slight left"],17:["on ramp","straight"],18:["on ramp","slight right"],19:["on ramp","slight left"],
+  20:["off ramp","slight right"],21:["off ramp","slight left"],22:["fork","straight"],23:["fork","slight right"],24:["fork","slight left"],25:["merge","straight"],
+  26:["roundabout","straight"],27:["exit roundabout","straight"],28:["continue","straight"],29:["continue","straight"],37:["merge","slight right"],38:["merge","slight left"]};
+function vTrip(trip){
+  const steps=[], all=[];
+  trip.legs.forEach(leg => { const shape=decode6(leg.shape);
+    leg.maneuvers.forEach(m => {
+      const [type,modifier]=VT[m.type]||["turn","straight"];
+      const names=m.street_names||m.begin_street_names||[];
+      const ref=names.find(n=>/^[A-Z]{1,3}\s?\d+[A-Z]?$/.test(n))||"", name=names.find(n=>n!==ref)||"";
+      const sg=m.sign||{}, txt=a=>(a||[]).map(x=>x.text).filter(Boolean);
+      const coords=shape.slice(m.begin_shape_index, m.end_shape_index+1); if(coords.length<2) coords.push(coords[0]||shape[shape.length-1]);
+      steps.push({distance:(m.length||0)*1000, duration:m.time||0, name, ref, exits:txt(sg.exit_number_elements).join(";"),
+        destinations:[...txt(sg.exit_branch_elements),...txt(sg.exit_toward_elements)].join(";"),
+        maneuver:{type, modifier, exit:m.roundabout_exit_count, location:shape[m.begin_shape_index]},
+        geometry:{coordinates:coords}, intersections:m.toll?[{classes:["toll"]}]:[]});
+    });
+    all.push(...(all.length?shape.slice(1):shape));
+  });
+  return {distance:trip.summary.length*1000, duration:trip.summary.time, geometry:{coordinates:all}, legs:[{steps}]};
+}
+async function valhallaRoutes(from, stops, to, costing){
+  const co={}; if(costing==="auto"||costing==="motorcycle") co[costing]={use_tolls:S.avoidTolls?0:0.5, use_highways:S.avoidHw?0:1, shortest:!!S.shortest};
+  const body={locations:[from,...stops,to].map(p=>({lat:+p.lat.toFixed(6), lon:+p.lng.toFixed(6)})), costing, costing_options:co,
+    directions_options:{units:"kilometers"}, alternates:stops.length?0:2};
+  const j=await (await fetch(CFG.valhalla+"?json="+encodeURIComponent(JSON.stringify(body)))).json();
+  if(!j.trip) throw new Error(j.error||"No route found.");
+  return [j.trip, ...(j.alternates||[]).map(a=>a.trip)].filter(Boolean).map(t=>prep(vTrip(t)));
+}
+// TomTom live traffic: scale each route's time by the traffic factor TomTom reports for the closest-length route.
+async function applyTraffic(routes, from, stops, to){
+  if(!S.ttKey || !routes.length) return;
+  const locs=[from,...stops,to].map(p=>p.lat.toFixed(6)+","+p.lng.toFixed(6)).join(":");
+  const url=CFG.tomtom+"/routing/1/calculateRoute/"+locs+"/json?key="+encodeURIComponent(S.ttKey)+"&traffic=true&computeTravelTimeFor=all&routeRepresentation=summaryOnly&travelMode="+(S.mode==="moto"?"motorcycle":"car")+(stops.length?"":"&maxAlternatives=2")+(S.avoidTolls?"&avoid=tollRoads":"")+(S.avoidHw?"&avoid=motorways":"");
+  const r=await fetch(url);
+  if(!r.ok){ if(r.status===401||r.status===403) toast("TomTom refused the key. Check it in Settings."); return; }
+  const tt=((await r.json()).routes||[]).map(x=>x.summary).filter(Boolean);
+  if(!tt.length) return;
+  routes.forEach(rt => {
+    const m=tt.reduce((a,b)=>Math.abs(b.lengthInMeters-rt.distance)<Math.abs(a.lengthInMeters-rt.distance)?b:a);
+    const base=m.noTrafficTravelTimeInSeconds||m.travelTimeInSeconds, f=Math.min(4,Math.max(0.85,m.travelTimeInSeconds/base));
+    rt.trafficDelay=Math.max(0,rt.duration*(f-1)); rt.duration*=f; rt.traffic=true;
+  });
 }
 function prep(r){
   const steps=r.legs.flatMap(l=>l.steps), pts=[], stepStart=[];
@@ -609,10 +776,18 @@ function prep(r){
 }
 function minDistToRoute(R,p){ let best=1e12; const step=R.pts.length>4000?2:1;
   for(let i=0;i<R.pts.length-1;i+=step){ const d=segProj(p,R.pts[i],R.pts[Math.min(i+step,R.pts.length-1)]).d; if(d<best) best=d; } return best; }
+function allHazards(withCams){ return [...S.reports, ...S.incidents, ...(withCams && S.R && S.R.cams ? S.R.cams : [])]; }
 // Waze-style: reports on a route add delay, and the best route is chosen on adjusted time.
-function scoreRoutes(){
-  S.routes.forEach(r => { r.alerts=S.reports.filter(rep=>minDistToRoute(r,rep)<45); r.penalty=r.alerts.reduce((a,h)=>a+(HZ[h.type].delay||0),0)*60; r.eff=r.duration+r.penalty; });
-  S.routes.sort((a,b) => S.avoidTolls && a.toll!==b.toll ? (a.toll?1:-1) : a.eff-b.eff);
+function scoreRoutes(list){
+  list = list || S.routes;
+  list.forEach(r => {
+    r.alerts=allHazards(false).filter(h=>minDistToRoute(r,h)<45);
+    // TomTom incidents are already inside a traffic-adjusted time, so only count them when traffic wasn't applied
+    r.penalty=r.alerts.reduce((a,h)=> a + (h.src==="tomtom" ? (r.traffic?0:(h.delay||HZ[h.type].delay*60)) : (HZ[h.type].delay||0)*60), 0);
+    r.eff=r.duration+r.penalty;
+  });
+  list.sort((a,b) => (S.avoidTolls && a.toll!==b.toll) ? (a.toll?1:-1) : S.shortest ? a.distance-b.distance : a.eff-b.eff);
+  return list;
 }
 async function setDest(place, keepStops){
   S.dest=place; if(!keepStops) S.stops=[]; $("results").hidden=true; clearFuel();
@@ -625,6 +800,8 @@ async function setDest(place, keepStops){
     S.routes = await fetchRoutes(from, S.stops, place); scoreRoutes(); S.sel=0;
     if(S.avoidTolls && S.routes.every(r=>r.toll)) toast("Every route found uses a toll road.");
     drawRoutes(); renderRouteSheet(); fitRoute(S.routes[0]);
+    if(S.ttKey) loadIncidents().then(()=>{ if(S.view==="routes"&&!S.nav){ scoreRoutes(); drawRoutes(); renderRouteSheet(); } });
+    loadExtrasAll();
   }catch(e){
     openSheet('<div class="grab"></div><div class="hd"><h2>'+esc(place.name)+'</h2></div><p class="hint">'+esc(e.message||"Routing isn't reachable right now.")+' Check your connection and try again.</p><div class="row"><button class="btn" id="cl">Close</button></div>');
     $("cl").onclick=closeRoute;
@@ -642,35 +819,62 @@ function drawNavRoute(){ if(!S.styleReady||!S.R) return; setRouteData([{type:"Fe
 function renderRouteSheet(){
   const p=S.dest, best=S.routes[0];
   let h='<div class="grab"></div><div class="hd"><h2>'+esc(p.name)+'</h2><p>'+esc(p.sub||"")+'</p></div>';
-  S.stops.forEach((s,i)=> h+='<div class="stop">⛽ <b>Stop: '+esc(s.name)+'</b><button class="btn sm" data-rmstop="'+i+'">Remove</button></div>');
+  h+='<div class="modes">'+Object.entries(MODES).map(([k,m])=>'<button class="mode'+(k===S.mode?' on':'')+'" data-mode="'+k+'">'+m.ico+' '+m.label+'</button>').join("")+'</div>';
+  if(motorised()) h+='<div class="prefs"><button class="pref'+(S.shortest?'':' on')+'" data-pref="fast">Fastest</button><button class="pref'+(S.shortest?' on':'')+'" data-pref="short">Shortest</button>'+
+     '<button class="pref'+(S.avoidTolls?' on':'')+'" data-pref="toll">Avoid tolls</button><button class="pref'+(S.avoidHw?' on':'')+'" data-pref="hw">Avoid highways</button></div>';
+  S.stops.forEach((s,i)=> h+='<div class="stop">📍 <b>Stop: '+esc(s.name)+'</b><button class="btn sm" data-rmstop="'+i+'">Remove</button></div>');
   h+='<div class="routes">';
   S.routes.forEach((r,i) => {
     const arrive=clock(new Date(Date.now()+r.eff*1000));
     const kinds=[...new Set(r.alerts.map(a=>HZ[a.type].e))].join(" ");
+    const traffic = r.traffic ? (r.trafficDelay>=60 ? '<span class="tag traffic">+'+Math.round(r.trafficDelay/60)+' min traffic</span>' : '<span class="tag flow">Clear roads</span>') : '';
+    const extras = r.extras==="done" ? (r.lights?'<span class="tag info">🚥 '+r.lights+'</span>':'')+(r.cams&&r.cams.length?'<span class="tag info">📷 '+r.cams.length+'</span>':'') : '';
     h+='<button class="rc'+(i===S.sel?" sel":"")+'" data-i="'+i+'"><span class="t">'+fmtDur(r.eff)+'</span><span class="d">'+fmtDist(r.distance)+'</span>'+
-       '<span class="via">'+(r===best&&S.routes.length>1?'<span class="tag best">Best</span>':'')+(r.toll?'<span class="tag toll">Toll</span>':'')+
-       (r.alerts.length?'<span class="tag alert">'+kinds+' '+r.alerts.length+' on route</span>':'')+
+       '<span class="via">'+(r===best&&S.routes.length>1?'<span class="tag best">'+(S.shortest?'Shortest':'Best')+'</span>':'')+traffic+(r.toll?'<span class="tag toll">Toll</span>':'')+
+       (r.alerts.length?'<span class="tag alert">'+kinds+' '+r.alerts.length+' on route</span>':'')+extras+
        'via '+esc(r.via.join(", ")||"local roads")+' · arrive '+arrive+(r.penalty?' · incl. '+Math.round(r.penalty/60)+' min reported delay':'')+'</span></button>';
   });
   h+='</div>'+
      '<div class="row"><button class="btn go" id="goBtn">GO</button><button class="btn" id="simBtn">Test drive</button></div>'+
-     '<div class="row"><button class="btn sm" id="dirBtn">☰ Directions</button><button class="btn sm" id="stopBtn">+ Add stop</button><button class="btn sm" id="shareBtn">Share</button><button class="btn sm" id="homeBtn">Set as Home</button><button class="btn sm" id="workBtn">Set as Work</button><button class="btn sm" id="closeBtn">Close</button></div>'+
-     '<p class="hint">Times are typical free-flow estimates plus delays from reports. Tap a grey line on the map to pick it.</p>';
-  openSheet(h);
+     '<div class="row"><button class="btn sm" id="dirBtn">☰ Directions</button><button class="btn sm" id="planBtn">🕒 Plan</button><button class="btn sm" id="stopBtn">+ Add stop</button><button class="btn sm" id="shareBtn">Share</button><button class="btn sm" id="homeBtn">Set as Home</button><button class="btn sm" id="workBtn">Set as Work</button><button class="btn sm" id="closeBtn">Close</button></div>'+
+     '<p class="hint">'+(S.ttKey&&motorised()?'Times include live traffic from TomTom and delays from reports.':'Times are typical free-flow estimates plus delays from reports'+(motorised()?'; add a TomTom key in Settings for live traffic.':'.'))+' 🚥 traffic lights · 📷 speed cameras on the route.</p>';
+  openSheet(h); S.view="routes";
   document.querySelectorAll(".rc").forEach(b => b.onclick=()=>{ S.sel=+b.dataset.i; drawRoutes(); renderRouteSheet(); });
+  document.querySelectorAll("[data-mode]").forEach(b => b.onclick=()=>{ S.mode=b.dataset.mode; store.set("mode",S.mode); setDest(S.dest,true); });
+  document.querySelectorAll("[data-pref]").forEach(b => b.onclick=()=>{ const k=b.dataset.pref;
+    if(k==="fast") S.shortest=false; if(k==="short") S.shortest=true; if(k==="toll") S.avoidTolls=!S.avoidTolls; if(k==="hw") S.avoidHw=!S.avoidHw;
+    store.set("shortest",S.shortest); store.set("avoidTolls",S.avoidTolls); store.set("avoidHw",S.avoidHw); setDest(S.dest,true); });
   document.querySelectorAll("[data-rmstop]").forEach(b => b.onclick=()=>{ S.stops.splice(+b.dataset.rmstop,1); setDest(S.dest,true); });
   $("goBtn").onclick=()=>startNav(false); $("simBtn").onclick=()=>startNav(true);
-  $("stopBtn").onclick=()=>{ S.searchMode="stop"; $("q").value=""; $("q").placeholder="Add a stop (or tap Petrol nearby)"; $("q").focus(); showSuggestions(); };
-  $("shareBtn").onclick=()=>shareTrip(false);
+  $("stopBtn").onclick=()=>{ S.searchMode="stop"; $("q").value=""; $("q").placeholder="Add a stop (or tap Nearby)"; $("q").focus(); showSuggestions(); };
+  $("shareBtn").onclick=openShareSheet;
   $("dirBtn").onclick=()=>directionsSheet(S.routes[S.sel], false);
+  $("planBtn").onclick=()=>openPlan();
   $("homeBtn").onclick=()=>savePlace("home"); $("workBtn").onclick=()=>savePlace("work"); $("closeBtn").onclick=closeRoute;
 }
+// Traffic lights and speed cameras along a route, from OpenStreetMap.
+async function routeExtras(r){
+  if(r.extras || !motorised()) return; r.extras="loading";
+  const total=r.cum[r.cum.length-1], n=Math.min(600, Math.max(2, Math.round(total/120)));
+  const pts=[]; let j=0; for(let k=0;k<=n;k++){ const d=total*k/n; while(j<r.cum.length-2 && r.cum[j+1]<d) j++; pts.push(r.pts[j]); }
+  const line=pts.map(p=>p.lat.toFixed(5)+","+p.lng.toFixed(5)).join(",");
+  const q='[out:json][timeout:25];(node(around:20,'+line+')["highway"="traffic_signals"];node(around:60,'+line+')["highway"="speed_camera"];);out body 3000;';
+  try{
+    const js=await (await fetch(CFG.overpass,{method:"POST", body:"data="+encodeURIComponent(q)})).json();
+    const seen=new Set(), cams=[]; let lights=0;
+    (js.elements||[]).forEach(e => { if(!isFinite(e.lat)) return; const tg=e.tags||{};
+      if(tg.highway==="speed_camera") cams.push({id:"osm-"+e.id, type:"camera", src:"osm", lat:e.lat, lng:e.lon, t:Date.now(), limit:parseInt(tg.maxspeed,10)||null});
+      else { const key=Math.round(e.lat/0.0005)+":"+Math.round(e.lon/0.0005); if(!seen.has(key)){ seen.add(key); lights++; } } }); // one junction ≈ one 50 m cell
+    r.lights=lights; r.cams=cams; r.extras="done";
+  }catch(e){ r.extras=null; }
+}
+async function loadExtrasAll(){ const list=S.routes.slice(); for(const r of list){ await routeExtras(r); if(S.view==="routes" && !S.nav && S.routes===list) renderRouteSheet(); } }
 function addStop(place){ S.stops=[place]; if(S.nav) rerouteWithStops(); else setDest(S.dest,true); toast("Stop added: "+place.name); }
 function savePlace(k){ S.saved[k]={...S.dest}; store.set("saved",S.saved); renderChips(); toast((k==="home"?"Home":"Work")+" saved"); }
 function closeRoute(){ closeSheet(); setRouteData([]); destMarker?.remove(); stopMarkers.forEach(m=>m.remove()); S.dest=null; S.stops=[]; S.routes=[]; $("q").value=""; $("clearQ").hidden=true; }
 
 /* ---------------- sheet ---------------- */
-function openSheet(html){ const s=$("sheet"); s.innerHTML=html; s.scrollTop=0; s.classList.remove("closed"); requestAnimationFrame(()=>setSheetVar(sheetH())); }
+function openSheet(html){ S.view=""; const s=$("sheet"); s.innerHTML=html; s.scrollTop=0; s.classList.remove("closed"); requestAnimationFrame(()=>setSheetVar(sheetH())); }
 function closeSheet(){ $("sheet").classList.add("closed"); setSheetVar(S.nav?tripH():0); }
 function sheetH(){ const s=$("sheet"); return s.classList.contains("closed")?0:s.offsetHeight; }
 function tripH(){ return $("tripbar").offsetHeight||84; }
@@ -755,6 +959,79 @@ function arrowSVG(step){
   return '<svg viewBox="0 0 48 48"><g transform="rotate('+rot+' 24 30)"><path d="M24 44V12M14 21l10-10 10 10" '+W+'/></g></svg>';
 }
 
+/* ---------------- lane guidance ---------------- */
+const LW='stroke="#fff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none"';
+const ROT={straight:0,"slight right":40,right:90,"sharp right":135,"sharp left":-135,left:-90,"slight left":-40,none:0};
+function laneSVG(ind){ if(ind==="uturn") return '<svg viewBox="0 0 48 48"><path d="M30 42V20a8 8 0 0 0-16 0v4M8 18l6 7 6-7" '+LW+'/></svg>';
+  return '<svg viewBox="0 0 48 48"><g transform="rotate('+(ROT[ind]||0)+' 24 30)"><path d="M24 44V12M14 21l10-10 10 10" '+LW+'/></g></svg>'; }
+function paintLanes(step, toMan){
+  const el=$("lanes"), lanes=step?.intersections?.[0]?.lanes;
+  if(!lanes || lanes.length<2 || toMan>1500){ el.hidden=true; return; }
+  const want=step.maneuver.modifier||"straight";
+  el.innerHTML=lanes.map(l=>{ const inds=l.indications&&l.indications.length?l.indications:["straight"];
+    const ind=l.valid ? (inds.find(i=>i===want)||inds.find(i=>i!=="none")||"straight") : (inds[0]==="none"?"straight":inds[0]);
+    return '<span class="lane'+(l.valid?' ok':'')+'">'+laneSVG(ind)+'</span>'; }).join("");
+  el.hidden=false;
+}
+
+/* ---------------- route progress bar (destination at the top) ---------------- */
+function buildProgress(){
+  const R=S.R; if(!R) return; const total=R.cum[R.cum.length-1]||1;
+  R.hazAlong=allHazards(true).map(h=>{ if(minDistToRoute(R,h)>45) return null; return {h, f:nearest(R,h,0).along/total}; }).filter(Boolean);
+  $("progMarks").innerHTML=R.hazAlong.map(x=>'<span class="pmark" style="bottom:'+(x.f*100).toFixed(2)+'%">'+HZ[x.h.type].e+'</span>').join("");
+  S.progBuilt=Date.now();
+}
+function paintProgress(along){ const R=S.R, total=R.cum[R.cum.length-1]||1, f=Math.min(1,Math.max(0,along/total));
+  $("progDone").style.height=(f*100)+"%"; $("progCar").style.bottom=(f*100)+"%"; }
+
+/* ---------------- faster route found (Waze) ---------------- */
+async function checkBetter(p, leftSec, remain){
+  try{
+    const rs=scoreRoutes(await fetchRoutes(p,S.stops,S.dest)), best=rs[0];
+    const save=leftSec-best.eff;
+    if(S.nav && save>=180 && Math.abs(best.distance-remain)/Math.max(remain,1)>0.03) offerBetter(best, Math.round(save/60));
+  }catch(e){}
+}
+function offerBetter(best, mins){
+  say(L().faster(mins));
+  showPrompt('<span class="ae">⚡</span><span class="at">Faster route · saves '+mins+' min</span><button data-a="yes">Switch</button><button data-a="no">Keep</button>',
+    {yes:()=>{ S.R=best; S.lastIdx=0; S.spoken={}; drawNavRoute(); buildProgress(); routeExtras(best).then(buildProgress); say(L().switched); }, no:()=>{}}, 15000);
+}
+// one shared prompt slot in the alert banner
+function showPrompt(html, actions, ms){
+  const a=$("alert"); S.asking=true; a.hidden=false; a.innerHTML=html;
+  const done=()=>{ S.asking=false; a.hidden=true; clearTimeout(tm); };
+  a.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{ actions[b.dataset.a]?.(); done(); });
+  const tm=setTimeout(done, ms||9000);
+}
+
+/* ---------------- TomTom live incidents ---------------- */
+function bboxOf(coords){ let a=[180,90,-180,-90]; coords.forEach(([x,y])=>{ a=[Math.min(a[0],x),Math.min(a[1],y),Math.max(a[2],x),Math.max(a[3],y)]; }); return a; }
+function boxArea(b){ return (b[3]-b[1])*111*(b[2]-b[0])*111*Math.cos(rad((b[1]+b[3])/2)); }
+function boxAround(p,d){ return [p.lng-d,p.lat-d,p.lng+d,p.lat+d]; }
+async function loadIncidents(){
+  if(!S.ttKey){ S.incidents=[]; return; }
+  const R=S.nav?S.R:(S.routes[S.sel]||null); let boxes;
+  if(R){ const b=bboxOf(R.coords); b[0]-=.01; b[1]-=.01; b[2]+=.01; b[3]+=.01;
+    boxes = boxArea(b)<9500 ? [b] : [0,.2,.4,.6,.8,1].map(f=>boxAround(R.pts[Math.floor((R.pts.length-1)*f)],.2)); }
+  else { const c=S.pos||{lat:map.getCenter().lat,lng:map.getCenter().lng}; boxes=[boxAround(c,.25)]; }
+  const fields='{incidents{type,geometry{type,coordinates},properties{id,iconCategory,magnitudeOfDelay,delay,from,to,events{description}}}}';
+  const out=new Map();
+  for(const b of boxes){
+    try{
+      const u=CFG.tomtom+"/traffic/services/5/incidentDetails?key="+encodeURIComponent(S.ttKey)+"&bbox="+b.map(x=>x.toFixed(5)).join(",")+"&fields="+encodeURIComponent(fields)+"&language=en-GB&timeValidityFilter=present";
+      const j=await (await fetch(u)).json();
+      (j.incidents||[]).forEach(f=>{ const pr=f.properties||{}, type=TT_ICON[pr.iconCategory]; if(!type) return;
+        if(type==="jam" && (+pr.magnitudeOfDelay||0)<2) return; // skip minor slow-downs
+        const c=f.geometry?.type==="Point"?f.geometry.coordinates:f.geometry?.coordinates?.[0]; if(!c || !isFinite(c[1])) return;
+        const id="tt-"+String(pr.id||c.join(",")).slice(0,60);
+        out.set(id,{id,type,src:"tomtom",lat:+c[1],lng:+c[0],t:Date.now(),delay:+pr.delay||0,
+          desc:String(pr.events?.[0]?.description||"").slice(0,140), road:[pr.from,pr.to].filter(Boolean).join(" → ").slice(0,140)}); });
+    }catch(e){}
+  }
+  S.incidents=[...out.values()].slice(0,200); drawReports();
+}
+
 /* ---------------- voice ---------------- */
 function say(text){
   if(!S.voice || !("speechSynthesis" in window)) return;
@@ -766,9 +1043,11 @@ if("speechSynthesis" in window) speechSynthesis.onvoiceschanged=()=>{};
 
 /* ---------------- navigation ---------------- */
 async function startNav(sim){
-  S.R=S.routes[S.sel]; S.nav=true; S.lastIdx=0; S.spoken={}; S.alerted={}; S.passed={}; S.follow=true;
+  S.R=S.routes[S.sel]; S.nav=true; S.lastIdx=0; S.spoken={}; S.alerted={}; S.passed={}; S.follow=true; S.parkOffered=false;
+  $("micFab").hidden=!SR; $("layersBtn").hidden=true;
   try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); actx.resume?.(); }catch(e){}
-  closeSheet(); clearFuel(); $("top").hidden=true; $("navtop").hidden=false; $("tripbar").hidden=false; $("speedo").hidden=false;
+  closeSheet(); clearFuel(); $("top").hidden=true; $("navtop").hidden=false; $("tripbar").hidden=false; $("speedo").hidden=!motorised(); $("prog").hidden=false;
+  S.lastBetter=Date.now(); routeExtras(S.R).then(buildProgress); buildProgress(); if(S.ttKey) loadIncidents().then(buildProgress);
   $("locBtn").classList.add("on"); setSheetVar(tripH());
   drawNavRoute();
   try{ S.wake=await navigator.wakeLock?.request("screen"); }catch(e){}
@@ -777,8 +1056,9 @@ async function startNav(sim){
   else map.jumpTo({center:ll(S.R.pts[0]), zoom:17});
 }
 function endNav(){
-  S.nav=false; stopSim(); try{ S.wake?.release(); }catch(e){} S.wake=null;
-  $("navtop").hidden=true; $("tripbar").hidden=true; $("top").hidden=false; $("speedo").hidden=true;
+  S.nav=false; stopSim(); try{ S.wake?.release(); }catch(e){} S.wake=null; if(Live.code) Live.stop(); if(S.hud) toggleHud(false);
+  $("micFab").hidden=true; $("layersBtn").hidden=false;
+  $("navtop").hidden=true; $("tripbar").hidden=true; $("top").hidden=false; $("speedo").hidden=true; $("prog").hidden=true; $("lanes").hidden=true;
   closeRoute(); setSheetVar(0);
   map.easeTo({pitch:0, bearing:0, padding:{top:0,bottom:0,left:0,right:0}, zoom:15, duration:600});
   if("speechSynthesis" in window) speechSynthesis.cancel();
@@ -802,16 +1082,18 @@ function navTick(p){
   const cur=stepAt(R,near.i), nxt=Math.min(cur+1,R.steps.length-1), step=R.steps[nxt], last=nxt===R.steps.length-1;
   const toMan=Math.max(0,R.cum[R.stepStart[nxt]]-near.along), remain=Math.max(0,R.cum[R.cum.length-1]-near.along);
   const ins=instr(step,last);
+  paintLanes(step, toMan); paintProgress(near.along); if(Date.now()-S.progBuilt>30000) buildProgress();
   $("navArrow").innerHTML=arrowSVG(step); $("navDist").textContent=fmtDist(toMan); $("navIns").textContent=ins.text; $("navRoad").textContent=[ins.road, ins.towards?"→ "+ins.towards:""].filter(Boolean).join("  ");
   const after=R.steps[nxt+1];
   if(after && toMan<500 && step.distance<300 && after.maneuver.type!=="arrive"){ $("navThen").hidden=false; $("navThen").innerHTML=t.then+esc(instr(after,false).text); }
   else $("navThen").hidden=true;
   // trip bar — remaining time scaled from the route estimate, plus delays from reports still ahead
-  const aheadPenalty = (R.alerts||[]).filter(a=>!S.passed[a.id]).reduce((s,a)=>s+(HZ[a.type]?.delay||0),0)*60;
+  const aheadPenalty = (R.alerts||[]).filter(a=>!S.passed[a.id] && a.src!=="tomtom").reduce((s,a)=>s+(HZ[a.type]?.delay||0),0)*60;
   const leftSec=R.duration*(remain/R.distance)+aheadPenalty;
   $("etaClock").textContent=clock(new Date(Date.now()+leftSec*1000));
   $("etaSub").textContent=fmtDur(leftSec)+" · "+fmtDist(remain)+(S.stops.length?" · via "+S.stops[0].name:"");
   S.lastLeft=leftSec;
+  if(motorised() && !S.sim && !S.rerouting && Date.now()-S.lastBetter>240000){ S.lastBetter=Date.now(); checkBetter(p, leftSec, remain); }
   // voice
   const kmh=(S.speed||0)*3.6, far=kmh>70?1000:400;
   if(step.maneuver.type!=="arrive" || !last){
@@ -819,12 +1101,17 @@ function navTick(p){
     if(toMan<=(kmh>70?250:70) && !S.spoken[nxt+"n"]){ S.spoken[nxt+"n"]=1; say(ins.full); }
   }
   if(S.stops.length && hav(p,S.stops[0])<40){ say(t.stop); toast(t.stop); S.stops.shift(); stopMarkers.shift()?.remove(); }
-  if(remain<30){ say(t.arrive); toast(t.arrive); endNav(); return; }
+  if(remain<1200 && motorised() && !S.parkOffered && !S.dest.isParking && !S.asking){ S.parkOffered=true;
+    showPrompt('<span class="ae">🅿️</span><span class="at">Parking near '+esc(S.dest.name)+'?</span><button data-a="yes">Show</button><button data-a="no">No</button>',
+      {yes:()=>openPlaces("parking", S.dest, 1000), no:()=>{}}, 12000); }
+  S.hudInfo={arrow:arrowSVG(step), dist:fmtDist(toMan), ins:ins.text+(ins.road?" · "+ins.road:""), eta:clock(new Date(Date.now()+leftSec*1000))+" · "+fmtDist(remain)};
+  if(S.hud) paintHud();
+  if(remain<30){ say(t.arrive); toast(t.arrive+addPoints(20+Math.floor(R.distance/1000))); endNav(); return; }
   hazardCheck(p);
 }
 async function reroute(p){
   S.rerouting=true; S.lastReroute=Date.now(); say(L().reroute); toast(L().reroute);
-  try{ S.routes=await fetchRoutes(p,S.stops,S.dest); scoreRoutes(); S.R=S.routes[0]; S.lastIdx=0; S.spoken={}; drawNavRoute(); }
+  try{ S.routes=await fetchRoutes(p,S.stops,S.dest); scoreRoutes(); S.R=S.routes[0]; S.lastIdx=0; S.spoken={}; drawNavRoute(); buildProgress(); routeExtras(S.R).then(buildProgress); }
   catch(e){ toast("Couldn't recalculate yet. Keep driving; it will retry."); }
   S.rerouting=false;
 }
@@ -832,7 +1119,7 @@ async function rerouteWithStops(){ const from=S.pos||S.R.pts[S.lastIdx]; S.lastR
 
 /* ---------------- test drive (simulation) ---------------- */
 function startSim(){
-  stopSim(); let d=0; const v=19; // ~70 km/h
+  stopSim(); let d=0; const v=(MODES[S.mode]||MODES.car).sim;
   S.sim=setInterval(()=>{
     const R=S.R, total=R.cum[R.cum.length-1];
     if(d===0 && S.simFrom){ d=nearest(R,S.simFrom,0).along; S.simFrom=null; }
@@ -865,8 +1152,9 @@ async function loadReports(){
 function saveReports(){ store.set("reports",S.reports); drawReports(); }
 function drawReports(){
   hzMarkers.forEach(m=>m.remove()); hzMarkers=[];
-  S.reports.forEach(r => {
-    const el=document.createElement("div"); el.className="hzpin"; el.textContent=HZ[r.type].e;
+  const cams = S.nav ? (S.R?.cams||[]) : (S.routes[S.sel]?.cams||[]);
+  [...S.reports, ...S.incidents, ...cams].forEach(r => {
+    const el=document.createElement("div"); el.className="hzpin"+(r.src==="tomtom"?" tt":r.src==="osm"?" osm":""); el.textContent=HZ[r.type].e;
     const mk=new maplibregl.Marker({element:el}).setLngLat(ll(r)).addTo(map);
     el.addEventListener("click", ev => { ev.stopPropagation(); reportPopup(r, mk); });
     hzMarkers.push(mk);
@@ -875,81 +1163,208 @@ function drawReports(){
 function ago(t){ const m=Math.round((Date.now()-t)/60000); return m<1?"just now":m<60?m+" min ago":Math.round(m/60)+" h ago"; }
 function reportPopup(r, mk){
   const d=document.createElement("div"); d.className="pop";
+  if(r.src){ // live traffic or map data: no voting
+    d.innerHTML='<b>'+HZ[r.type].e+' '+esc(hzName(r.type))+'</b><div class="m">'+(r.src==="tomtom"?esc(r.desc||"")+(r.road?'<br>'+esc(r.road):'')+(r.delay?'<br>Delay about '+Math.max(1,Math.round(r.delay/60))+' min':'')+'<br>Live traffic from TomTom':'Fixed camera'+(r.limit?' · limit '+r.limit+' km/h':'')+' · from OpenStreetMap')+'</div>';
+    new maplibregl.Popup({offset:22, closeButton:false}).setLngLat(ll(r)).setDOMContent(d).addTo(map); return;
+  }
   d.innerHTML='<b>'+HZ[r.type].e+' '+esc(hzName(r.type))+'</b><div class="m">Reported '+ago(r.t)+(r.up?' · confirmed by '+r.up:'')+'</div><div class="row"><button class="btn sm" data-a="up">👍 Still there</button><button class="btn sm" data-a="down">👎 Gone</button></div>';
   const pop=new maplibregl.Popup({offset:22, closeButton:false}).setLngLat(ll(r)).setDOMContent(d).addTo(map);
   d.querySelector('[data-a="up"]').onclick=()=>{ vote(r,true); pop.remove(); };
   d.querySelector('[data-a="down"]').onclick=()=>{ vote(r,false); pop.remove(); };
 }
 function vote(r, up){
-  if(up){ r.up=(r.up||0)+1; r.t=Date.now(); Sync.put(r).catch(()=>{}); toast("Thanks — report kept on the map"); }
+  if(up){ r.up=(r.up||0)+1; r.t=Date.now(); Sync.put(r).catch(()=>{}); toast("Thanks — report kept on the map"+addPoints(3)); }
   else { r.down=(r.down||0)+1;
-    if(!Sync.base() || r.down>=2){ S.reports=S.reports.filter(x=>x.id!==r.id); Sync.del(r.id).catch(()=>{}); toast("Report removed"); }
+    if(!Sync.base() || r.down>=2){ S.reports=S.reports.filter(x=>x.id!==r.id); Sync.del(r.id).catch(()=>{}); toast("Report removed"+addPoints(3)); }
     else { Sync.put(r).catch(()=>{}); toast("Thanks — it goes after one more 'Gone'"); } }
   saveReports();
 }
 function openReport(){
   const t=S.lang;
   let h='<div class="grab"></div><div class="hd"><h2>'+(t==="ms"?"Lapor":t==="zh"?"报告路况":"Report")+'</h2><p>'+(S.pos?"Placed at your current position":"No GPS fix yet, so it goes at the map centre")+(Sync.base()?" · shared with other drivers":" · saved on this phone")+'</p></div><div class="hzgrid">';
-  Object.entries(HZ).forEach(([k,v])=> h+='<button class="hz" data-k="'+k+'"><i>'+v.e+'</i>'+esc(v[t]||v.en)+'</button>');
+  USER_HZ.forEach(k=>{ const v=HZ[k]; h+='<button class="hz" data-k="'+k+'"><i>'+v.e+'</i>'+esc(v[t]||v.en)+'</button>'; });
   h+='</div><div class="row"><button class="btn" id="cancelRep">Cancel</button></div>';
   openSheet(h);
-  document.querySelectorAll(".hz").forEach(b => b.onclick=()=>{
-    const p=S.pos||{lat:map.getCenter().lat, lng:map.getCenter().lng};
-    const r={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6), type:b.dataset.k, lat:p.lat, lng:p.lng, t:Date.now(), up:0, down:0};
-    S.reports.push(r); S.myReports++; store.set("myReports",S.myReports);
-    if(Sync.base()){ r.synced=true; Sync.put(r).catch(()=>toast("Saved on this phone; sharing failed.")); }
-    saveReports(); afterSheet(); navigator.vibrate?.(40);
-    toast(hzName(b.dataset.k)+" reported. Terima kasih!");
-  });
+  document.querySelectorAll(".hz").forEach(b => b.onclick=()=>{ makeReport(b.dataset.k); afterSheet(); });
   $("cancelRep").onclick=afterSheet;
+}
+function makeReport(type){
+  const p=S.pos||{lat:map.getCenter().lat, lng:map.getCenter().lng};
+  const r={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6), type, lat:p.lat, lng:p.lng, t:Date.now(), up:0, down:0};
+  S.reports.push(r); S.myReports++; store.set("myReports",S.myReports);
+  if(Sync.base()){ r.synced=true; Sync.put(r).catch(()=>toast("Saved on this phone; sharing failed.")); }
+  saveReports(); navigator.vibrate?.(40);
+  toast(hzName(type)+" reported. Terima kasih!"+addPoints(10));
+  if(S.nav) buildProgress();
 }
 function hazardCheck(p){
   let shown=null;
-  S.reports.forEach(r => { const d=hav(p,r), ahead=Math.abs(((bearing(p,r)-S.heading+540)%360)-180)<60;
-    if(d<700 && ahead && d>25){ if(!shown||d<shown.d) shown={r,d};
-      if(!S.alerted[r.id]){ S.alerted[r.id]=1; if(r.type==="camera"||r.type==="police") beep(1); say(L().ahead(hzName(r.type))); } }
-    else if(S.alerted[r.id] && !S.passed[r.id] && d<=40){ S.passed[r.id]=1; askStillThere(r); }
+  allHazards(true).forEach(r => { const d=hav(p,r), ahead=Math.abs(((bearing(p,r)-S.heading+540)%360)-180)<60;
+    const warnAt = r.type==="camera" ? 600 : 800;
+    if(d<warnAt && ahead && d>25){ if(!shown||d<shown.d) shown={r,d};
+      if(!S.alerted[r.id]){ S.alerted[r.id]=1; if(r.type==="camera"||r.type==="police") beep(1);
+        say(r.type==="camera" ? L().camAhead(r.limit) : L().ahead(hzName(r.type))); } }
+    else if(S.alerted[r.id] && !S.passed[r.id] && d<=40){ S.passed[r.id]=1; if(!r.src) askStillThere(r); }
   });
   const a=$("alert"); if(S.asking) return;
-  if(shown){ a.hidden=false; a.innerHTML='<span class="ae">'+HZ[shown.r.type].e+'</span><span class="at">'+esc(hzName(shown.r.type))+' · '+fmtDist(shown.d)+'</span>'; }
+  if(shown){ a.hidden=false; a.innerHTML='<span class="ae">'+HZ[shown.r.type].e+'</span><span class="at">'+esc(hzName(shown.r.type))+(shown.r.limit?' · '+shown.r.limit+' km/h':'')+' · '+fmtDist(shown.d)+'</span>'; }
   else a.hidden=true;
 }
 // Waze's "Still there?" prompt as you pass a report.
 function askStillThere(r){
-  const a=$("alert"); S.asking=true; a.hidden=false;
-  a.innerHTML='<span class="ae">'+HZ[r.type].e+'</span><span class="at">'+esc(hzName(r.type))+' — '+esc(L().stillThere)+'</span><button data-a="up">👍</button><button data-a="down">👎</button>';
-  const done=()=>{ S.asking=false; a.hidden=true; clearTimeout(tm); };
-  a.querySelector('[data-a="up"]').onclick=()=>{ vote(r,true); done(); };
-  a.querySelector('[data-a="down"]').onclick=()=>{ vote(r,false); done(); };
-  const tm=setTimeout(done, 9000);
+  showPrompt('<span class="ae">'+HZ[r.type].e+'</span><span class="at">'+esc(hzName(r.type))+' — '+esc(L().stillThere)+'</span><button data-a="up">👍</button><button data-a="down">👎</button>',
+    {up:()=>vote(r,true), down:()=>vote(r,false)}, 9000);
 }
 
-/* ---------------- petrol stations ---------------- */
+/* ---------------- nearby places (Amap-style categories) ---------------- */
+const NEARBY = {
+  fuel:    {ico:"⛽", label:"Petrol",          q:'["amenity"="fuel"]', r:8000},
+  ev:      {ico:"🔌", label:"EV charging",     q:'["amenity"="charging_station"]', r:15000},
+  parking: {ico:"🅿️", label:"Parking",         q:'["amenity"="parking"]', r:2000},
+  food:    {ico:"🍜", label:"Food",            q:'["amenity"~"^(restaurant|fast_food|food_court|cafe)$"]', r:3000},
+  shop:    {ico:"🏪", label:"Convenience",     q:'["shop"~"^(convenience|supermarket)$"]', r:3000},
+  atm:     {ico:"🏧", label:"ATM",             q:'["amenity"="atm"]', r:3000},
+  surau:   {ico:"🕌", label:"Surau & mosque",  q:'["amenity"="place_of_worship"]["religion"="muslim"]', r:5000},
+  toilet:  {ico:"🚻", label:"Toilets",         q:'["amenity"="toilets"]', r:5000},
+  hospital:{ico:"🏥", label:"Hospital & clinic",q:'["amenity"~"^(hospital|clinic)$"]', r:10000},
+  hotel:   {ico:"🏨", label:"Hotel",           q:'["tourism"~"^(hotel|motel|guest_house)$"]', r:8000},
+  repair:  {ico:"🔧", label:"Car repair",      q:'["shop"~"^(car_repair|tyres)$"]', r:8000},
+  police:  {ico:"🚓", label:"Police station",  q:'["amenity"="police"]', r:10000},
+};
 function clearFuel(){ S.fuelMarkers.forEach(m=>m.remove()); S.fuelMarkers=[]; }
-async function openFuel(){
-  const c=S.pos||{lat:map.getCenter().lat, lng:map.getCenter().lng};
-  openSheet('<div class="grab"></div><div class="hd"><h2>Petrol nearby</h2><p>Within 8 km'+(S.nav?' · tap one to add it as a stop':'')+'</p></div><p class="hint">Looking for stations…</p>');
-  const q='[out:json][timeout:12];(node(around:8000,'+c.lat+','+c.lng+')[amenity=fuel];way(around:8000,'+c.lat+','+c.lng+')[amenity=fuel];);out center 40;';
+function openNearby(){
+  let h='<div class="grab"></div><div class="hd"><h2>Nearby</h2><p>'+(S.nav?'Places ahead of you first · tap one to add it as a stop':'Around '+(S.pos?'you':'the map centre'))+'</p></div><div class="hzgrid">';
+  Object.entries(NEARBY).forEach(([k,v])=> h+='<button class="hz" data-near="'+k+'"><i>'+v.ico+'</i>'+esc(v.label)+'</button>');
+  h+='</div><div class="row"><button class="btn" id="cl">Close</button></div>';
+  openSheet(h);
+  document.querySelectorAll("[data-near]").forEach(b=>b.onclick=()=>openPlaces(b.dataset.near));
+  $("cl").onclick=afterSheet;
+}
+function placeInfo(k, tg){
+  const bits=[];
+  if(tg.brand && tg.name && tg.name!==tg.brand) bits.push(tg.name);
+  if(k==="food" && tg.cuisine) bits.push(tg.cuisine.replace(/;/g,", ").replace(/_/g," "));
+  if(k==="parking"){ if(tg.fee==="no") bits.push("Free"); else if(tg.fee==="yes") bits.push("Paid"); if(tg.capacity) bits.push(tg.capacity+" bays"); if(tg.parking==="multi-storey") bits.push("Multi-storey"); }
+  if(k==="ev"){ const sockets=Object.keys(tg).filter(x=>/^socket:[^:]+$/.test(x)).map(x=>x.slice(7).replace(/_/g," ")); if(sockets.length) bits.push(sockets.join(", ")); if(tg.operator) bits.push(tg.operator); }
+  if(tg.opening_hours==="24/7") bits.push("Open 24 hours"); else if(tg.opening_hours && tg.opening_hours.length<26) bits.push(tg.opening_hours);
+  if(tg["addr:street"]) bits.push(tg["addr:street"]);
+  return bits.join(" · ");
+}
+async function openPlaces(k, center, radius){
+  const cat=NEARBY[k]; if(!cat) return;
+  const c=center||S.pos||{lat:map.getCenter().lat, lng:map.getCenter().lng}, rr=radius||cat.r;
+  const near = center ? "near "+(center.name||"there") : "within "+fmtDist(rr);
+  openSheet('<div class="grab"></div><div class="hd"><h2>'+cat.ico+' '+esc(cat.label)+'</h2><p>'+esc(near)+'</p></div><p class="hint">Looking nearby…</p>');
+  const q='[out:json][timeout:15];(node(around:'+rr+','+c.lat+','+c.lng+')'+cat.q+';way(around:'+rr+','+c.lat+','+c.lng+')'+cat.q+';);out center 60;';
+  const fail=msg=>{ openSheet('<div class="grab"></div><div class="hd"><h2>'+cat.ico+' '+esc(cat.label)+'</h2></div><p class="hint">'+msg+'</p><div class="row"><button class="btn" id="cl">Back</button></div>'); $("cl").onclick=()=>{ clearFuel(); openNearby(); }; };
   try{
     const j=await (await fetch(CFG.overpass,{method:"POST", body:"data="+encodeURIComponent(q)})).json();
     let list=(j.elements||[]).map(e=>{ const lat=e.lat??e.center?.lat, lng=e.lon??e.center?.lon, tg=e.tags||{};
-      return {name:tg.brand||tg.name||"Petrol station", sub:[tg.name&&tg.brand&&tg.name!==tg.brand?tg.name:"", tg["addr:street"]||"", tg.opening_hours==="24/7"?"Open 24 hours":""].filter(Boolean).join(" · "), lat, lng}; })
-      .filter(f=>isFinite(f.lat));
-    // while driving, prefer stations ahead of you
-    list.forEach(f=>{ f.d=hav(c,f); f.ahead = !S.nav || Math.abs(((bearing(c,f)-S.heading+540)%360)-180)<75; });
-    list.sort((a,b)=>(b.ahead-a.ahead)||(a.d-b.d)); list=list.slice(0,12);
-    if(!list.length){ openSheet('<div class="grab"></div><div class="hd"><h2>Petrol nearby</h2></div><p class="hint">No stations found within 8 km.</p><div class="row"><button class="btn" id="cl">Close</button></div>'); $("cl").onclick=()=>{clearFuel();afterSheet();}; return; }
+      return {name:tg.brand||tg.name||cat.label, sub:placeInfo(k,tg), lat, lng}; }).filter(f=>isFinite(f.lat));
+    list.forEach(f=>{ f.d=hav(c,f);
+      if(S.nav && S.R && !center){ f.off=minDistToRoute(S.R,f); f.ahead=nearest(S.R,f,S.lastIdx).along >= nearest(S.R,c,S.lastIdx).along; }
+      else { f.off=null; f.ahead=true; } });
+    // driving: places on or near the route and ahead of you first (smallest detour), Amap-style
+    list.sort((a,b)=> S.nav&&!center ? ((b.ahead-a.ahead) || (a.off-b.off) || (a.d-b.d)) : a.d-b.d);
+    list=list.slice(0,15);
+    if(!list.length) return fail("Nothing found "+esc(near)+".");
     clearFuel();
-    list.forEach(f=>{ const m=pin("fuelpin",f,"⛽"); m.getElement().onclick=ev=>{ev.stopPropagation(); chooseFuel(f);}; S.fuelMarkers.push(m); });
-    let h='<div class="grab"></div><div class="hd"><h2>Petrol nearby</h2><p>'+list.length+(list.length===1?' station':' stations')+(S.nav?' · ahead of you first':'')+'</p></div><div class="list">';
-    list.forEach((f,i)=> h+='<button class="li" data-f="'+i+'"><span style="font-size:22px">⛽</span><span class="tx"><b>'+esc(f.name)+'</b><span>'+esc(f.sub||(f.ahead&&S.nav?"Ahead":""))+'</span></span><span class="dd">'+fmtDist(f.d)+'</span></button>');
-    h+='</div><div class="row"><button class="btn" id="cl">Close</button></div>';
+    list.forEach(f=>{ const m=pin("fuelpin",f,cat.ico); m.getElement().onclick=ev=>{ ev.stopPropagation(); choosePlace(f,k); }; S.fuelMarkers.push(m); });
+    let h='<div class="grab"></div><div class="hd"><h2>'+cat.ico+' '+esc(cat.label)+'</h2><p>'+list.length+' found '+esc(near)+'</p></div><div class="list">';
+    list.forEach((f,i)=>{ const tag = f.off!=null ? (f.off<150?'On your route':'+'+fmtDist(f.off)+' off route') : '';
+      h+='<button class="li" data-f="'+i+'"><span style="font-size:22px">'+cat.ico+'</span><span class="tx"><b>'+esc(f.name)+'</b><span>'+esc([tag,f.sub].filter(Boolean).join(" · "))+'</span></span><span class="dd">'+fmtDist(f.d)+'</span></button>'; });
+    h+='</div><div class="row"><button class="btn" id="bk">Back</button><button class="btn" id="cl">Close</button></div>';
     openSheet(h);
-    document.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>chooseFuel(list[+b.dataset.f]));
-    $("cl").onclick=()=>{ clearFuel(); afterSheet(); };
-  }catch(e){ openSheet('<div class="grab"></div><div class="hd"><h2>Petrol nearby</h2></div><p class="hint">Station search isn\'t reachable right now. Try again in a moment.</p><div class="row"><button class="btn" id="cl">Close</button></div>'); $("cl").onclick=afterSheet; }
+    document.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>choosePlace(list[+b.dataset.f],k));
+    $("bk").onclick=()=>{ clearFuel(); openNearby(); }; $("cl").onclick=()=>{ clearFuel(); afterSheet(); };
+  }catch(e){ fail("Place search isn't reachable right now. Try again in a moment."); }
 }
-function chooseFuel(f){ clearFuel(); if(S.nav||(S.dest&&S.searchMode==="stop")){ closeSheet(); addStop(f); } else setDest(f); }
+const openFuel = () => openPlaces("fuel");
+function choosePlace(f, k){
+  clearFuel();
+  if(S.nav && k==="parking"){ closeSheet(); S.dest={...f, isParking:true}; S.stops=[]; destMarker?.remove(); destMarker=pin("destpin",f); S.lastReroute=0; reroute(S.pos||S.R.pts[S.lastIdx]); toast("Heading to "+f.name); return; }
+  if(S.nav || (S.dest && S.searchMode==="stop")){ closeSheet(); addStop(f); return; }
+  setDest(f);
+}
+const chooseFuel = f => choosePlace(f,"fuel");
+
+/* ---------------- points (Waze-style) ---------------- */
+const LEVELS=[[0,"Learner"],[100,"Road Scout"],[500,"Traffic Hero"],[2000,"Highway Legend"],[10000,"Waveguide Royalty"]];
+function levelOf(p){ let l=LEVELS[0]; LEVELS.forEach(x=>{ if(p>=x[0]) l=x; }); return l; }
+function nextLevel(p){ return LEVELS.find(x=>x[0]>p); }
+function addPoints(n){ const before=levelOf(S.points)[1]; S.points+=n; store.set("points",S.points); const after=levelOf(S.points)[1];
+  return " · +"+n+" points"+(after!==before?" · New level: "+after+"!":""); }
+
+/* ---------------- live location sharing + following friends ---------------- */
+const DBRE=/^https:\/\/[a-z0-9.-]+\.(firebaseio\.com|firebasedatabase\.app)$/i;
+const Live = {
+  code:null, timer:null,
+  async start(){
+    if(!Sync.base()){ toast("Live location uses the shared database. Add it in Settings first."); openSettings(); return null; }
+    this.code = this.code || Math.random().toString(36).slice(2,8).toUpperCase();
+    await this.push(); clearInterval(this.timer); this.timer=setInterval(()=>this.push(),10000); return this.code;
+  },
+  async push(){ if(!this.code || !S.pos) return;
+    const body={name:(S.myName||"Waveguide driver").slice(0,40), lat:+S.pos.lat.toFixed(6), lng:+S.pos.lng.toFixed(6), heading:Math.round(S.heading||0),
+      speed:Math.round((S.speed||0)*3.6), t:Date.now(), dest:S.dest?{name:String(S.dest.name).slice(0,80)}:null, eta:S.nav&&S.lastLeft?Math.round(Date.now()+S.lastLeft*1000):null};
+    try{ await fetch(Sync.base()+"/live/"+this.code+".json",{method:"PUT", body:JSON.stringify(body)}); }catch(e){} },
+  async stop(){ clearInterval(this.timer); this.timer=null; const c=this.code; this.code=null;
+    if(c && Sync.base()) try{ await fetch(Sync.base()+"/live/"+c+".json",{method:"DELETE"}); }catch(e){} },
+  link(){ return location.origin+location.pathname+"#follow="+this.code+"&db="+encodeURIComponent(Sync.base().replace("https://","")); },
+};
+const Follow = {
+  codes:store.get("follow",[]), db:store.get("followDb",""), markers:{}, data:{}, timer:null,
+  base(){ return DBRE.test(this.db) ? this.db : Sync.base(); },
+  add(code, db){
+    code=String(code||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,8);
+    if(code.length<4){ toast("That code looks too short."); return; }
+    if(db){ const u="https://"+String(db).replace(/^https?:\/\//,"").replace(/\/+$/,""); if(DBRE.test(u)){ this.db=u; store.set("followDb",u); } }
+    if(!this.base()){ toast("Following needs the same shared database as your friend. Open the link they sent."); return; }
+    if(!this.codes.includes(code)) this.codes.push(code); store.set("follow",this.codes);
+    this.start(); this.poll(); toast("Following "+code);
+  },
+  remove(code){ this.codes=this.codes.filter(c=>c!==code); store.set("follow",this.codes); this.markers[code]?.remove(); delete this.markers[code]; delete this.data[code]; renderFriends(); },
+  start(){ if(!this.timer && this.codes.length) this.timer=setInterval(()=>this.poll(),5000); },
+  async poll(){ const b=this.base(); if(!b) return;
+    for(const c of this.codes){ try{ this.show(c, await (await fetch(b+"/live/"+c+".json")).json()); }catch(e){} }
+    renderFriends(); },
+  show(c, v){
+    if(!v || !isFinite(+v.lat) || !isFinite(+v.lng)){ this.markers[c]?.remove(); delete this.markers[c]; this.data[c]=null; return; }
+    const d={name:String(v.name||"Friend").slice(0,40), lat:+v.lat, lng:+v.lng, heading:+v.heading||0, speed:+v.speed||0, t:+v.t||0,
+      dest:v.dest&&v.dest.name?String(v.dest.name).slice(0,80):"", eta:+v.eta||0};
+    this.data[c]=d;
+    if(!this.markers[c]){ const el=document.createElement("div"); el.className="friend";
+      el.innerHTML='<span class="car"><svg viewBox="0 0 24 24"><path d="M12 3l6 15-6-3.5L6 18z" fill="#fff"/></svg></span><span class="nm"></span>';
+      el.onclick=ev=>{ ev.stopPropagation(); map.easeTo({center:[this.data[c].lng,this.data[c].lat], zoom:15}); };
+      this.markers[c]=new maplibregl.Marker({element:el}).setLngLat([d.lng,d.lat]).addTo(map); }
+    this.markers[c].setLngLat([d.lng,d.lat]); const el=this.markers[c].getElement();
+    el.querySelector(".nm").textContent=d.name; el.querySelector(".car svg").style.transform="rotate("+(d.heading-map.getBearing())+"deg)";
+  },
+};
+function renderFriends(){
+  const box=$("friends"); box.innerHTML="";
+  Object.entries(Follow.data).forEach(([c,d])=>{ if(!d) return;
+    const mins=Math.round((Date.now()-d.t)/60000), b=document.createElement("button"); b.className="friend-row";
+    const status = mins>10 ? 'last seen '+ago(d.t) : (d.speed>3?d.speed+' km/h':'stopped')+(d.dest?' · to '+esc(d.dest):'')+(d.eta?' · ETA '+clock(new Date(d.eta)):'');
+    b.innerHTML='<span style="font-size:20px">🚗</span><span style="flex:1;min-width:0"><b>'+esc(d.name)+'</b><br><span>'+status+'</span></span><span>'+(S.pos?fmtDist(hav(S.pos,d)):'')+'</span>';
+    b.onclick=()=>map.easeTo({center:[d.lng,d.lat], zoom:15}); box.appendChild(b); });
+}
+function openShareSheet(){
+  const sharing=!!Live.code;
+  openSheet('<div class="grab"></div><div class="hd"><h2>Share</h2><p>Let people know where you are'+(S.dest?' and when you\'ll reach '+esc(S.dest.name):'')+'.</p></div><div class="list">'+
+    (S.dest?'<button class="li" id="shEta"><span style="font-size:22px">⏱️</span><span class="tx"><b>Send my ETA</b><span>A message with your arrival time and the destination</span></span></button>':'')+
+    '<button class="li" id="shLive"><span style="font-size:22px">📡</span><span class="tx"><b>'+(sharing?'Send live location link again':'Share live location')+'</b><span>Friends see your car move on their map, updated every 10 seconds</span></span></button>'+
+    (sharing?'<button class="li" id="shStop"><span style="font-size:22px">⏹️</span><span class="tx"><b>Stop sharing live location</b><span>Code '+Live.code+'</span></span></button>':'')+
+    '</div><div class="row"><button class="btn" id="cl">Close</button></div>');
+  if($("shEta")) $("shEta").onclick=()=>{ shareTrip(S.nav); afterSheet(); };
+  $("shLive").onclick=async()=>{ const c=await Live.start(); if(!c) return;
+    const text=(S.myName||"I")+(S.myName?" is":" am")+" sharing live location on Waveguide"+(S.dest?" on the way to "+S.dest.name:"")+". Code "+c+".";
+    try{ if(navigator.share){ await navigator.share({title:"Live location", text, url:Live.link()}); afterSheet(); return; } }catch(e){ if(e.name==="AbortError"){ afterSheet(); return; } }
+    try{ await navigator.clipboard.writeText(text+" "+Live.link()); toast("Live link copied. Paste it to your friends."); }catch(e){ toast("Code "+c); }
+    afterSheet(); };
+  if($("shStop")) $("shStop").onclick=()=>{ Live.stop(); toast("Stopped sharing live location"); afterSheet(); };
+  $("cl").onclick=afterSheet;
+}
 
 /* ---------------- share ETA ---------------- */
 async function shareTrip(live){
@@ -960,42 +1375,187 @@ async function shareTrip(live){
   try{ if(navigator.share){ await navigator.share({title:"My ETA", text, url}); return; } }catch(e){ if(e.name==="AbortError") return; }
   try{ await navigator.clipboard.writeText(text+" "+url); toast("ETA copied. Paste it into WhatsApp or any chat."); }catch(e){ toast(text); }
 }
-$("navShare").onclick=()=>shareTrip(true);
-$("navFuel").onclick=openFuel;
+$("navShare").onclick=openShareSheet;
+$("navFuel").onclick=openNearby;
+
+/* ---------------- voice commands ---------------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const CMD_HZ = [["police",/police|polis|警察|cop/],["accident",/accident|crash|kemalangan|车祸|事故/],["jam",/jam|traffic|sesak|塞车|堵车/],["flood",/flood|banjir|水灾|淹水/],
+  ["camera",/camera|kamera|相机|测速/],["works",/road ?works|construction|kerja jalan|施工/],["pothole",/pothole|lubang|坑/],["closed",/closed|ditutup|封路|封闭/],["object",/object|objek|障碍/]];
+const CMD_NEAR = [["fuel",/petrol|gas station|fuel|minyak|stesen minyak|加油|油站/],["parking",/parking|letak kereta|parkir|停车/],["food",/food|eat|restaurant|makan|吃|餐厅|饭/],
+  ["atm",/\batm\b|bank|提款|银行/],["toilet",/toilet|tandas|厕所|洗手间/],["surau",/surau|masjid|mosque|清真寺/],["hospital",/hospital|klinik|clinic|医院|诊所/],
+  ["ev",/charging|charger|\bev\b|cas elektrik|充电/],["shop",/convenience|7-?eleven|kedai runcit|便利店|超市/],["hotel",/hotel|酒店/]];
+function setMic(on){ ["micBtn","micFab"].forEach(id=>$(id).classList.toggle("listening",on)); }
+function listen(){
+  if(!SR){ toast("Voice commands aren't supported in this browser."); return; }
+  const rec=new SR(); rec.lang={en:"en-MY",ms:"ms-MY",zh:"zh-CN"}[S.lang]||"en-MY"; rec.interimResults=false; rec.maxAlternatives=1;
+  setMic(true); if("speechSynthesis" in window) speechSynthesis.cancel();
+  toast(S.lang==="ms"?"Sedang mendengar…":S.lang==="zh"?"请说…":"Listening… try \"navigate to KLCC\" or \"report police\"");
+  rec.onresult=e=>{ const text=e.results[0][0].transcript; toast("Heard: "+text); runCommand(text); };
+  rec.onerror=e=>toast(e.error==="not-allowed"?"Allow the microphone to use voice commands.":"Didn't catch that. Tap the mic and try again.");
+  rec.onend=()=>setMic(false);
+  try{ rec.start(); }catch(e){ setMic(false); }
+}
+function go(place){ if(S.nav){ S.dest=place; S.stops=[]; destMarker?.remove(); destMarker=pin("destpin",place); S.lastReroute=0; reroute(S.pos||S.R.pts[S.lastIdx]); } else setDest(place); }
+async function runCommand(raw){
+  const t=raw.toLowerCase().trim();
+  if(/(report|lapor|报告|举报)/.test(t)){ const hit=CMD_HZ.find(([,re])=>re.test(t)); if(hit) makeReport(hit[0]); else openReport(); return; }
+  if(/(unmute|voice on|hidupkan suara|开启语音|取消静音)/.test(t)){ S.voice=true; store.set("voice",true); paintVoice(); say("Voice on"); return; }
+  if(/^(mute|senyap|diam|静音|关闭语音)/.test(t)){ S.voice=false; store.set("voice",false); paintVoice(); toast("Voice muted"); return; }
+  if(/(stop navigation|end navigation|cancel route|tamat navigasi|berhenti navigasi|结束导航|停止导航)/.test(t)){ if(S.nav) endNav(); return; }
+  if(/(go home|take me home|balik rumah|pulang|回家)/.test(t)){ if(S.saved.home) go(S.saved.home); else toast("Set Home first: pick a place, then tap Set as Home."); return; }
+  if(/(go to work|to the office|ke pejabat|pergi kerja|上班|去公司)/.test(t)){ if(S.saved.work) go(S.saved.work); else toast("Set Work first: pick a place, then tap Set as Work."); return; }
+  if(/(share|kongsi|分享)/.test(t)){ openShareSheet(); return; }
+  if(/(hud|head.?up)/.test(t)){ toggleHud(true); return; }
+  const m=t.match(/^(?:navigate to|navigate|go to|take me to|drive to|directions to|pergi ke|bawa saya ke|导航到|导航去|带我去|去)\s*(.+)$/);
+  const near=CMD_NEAR.find(([,re])=>re.test(t));
+  if(near && (!m || /(near|nearby|nearest|closest|find|cari|terdekat|berdekatan|附近|最近|找)/.test(t))){ openPlaces(near[0]); return; }
+  const q=(m?m[1]:raw).trim(); if(!q) return;
+  const list=await searchPlaces(q);
+  if(!list || !list.length){ toast("No place called \""+q+"\" found."); return; }
+  if(S.nav){ go(list[0]); toast("Going to "+list[0].name); return; }
+  $("q").value=q; $("clearQ").hidden=false; if(m) pickPlace(list[0]); else showResults(list);
+}
+$("micBtn").onclick=listen; $("micFab").onclick=listen;
+if(!SR) $("micBtn").hidden=true;
+
+/* ---------------- HUD (windscreen reflection) ---------------- */
+function toggleHud(on){
+  S.hud = on===undefined ? !S.hud : on; $("hud").hidden=!S.hud; $("hudIn").classList.toggle("mirror",S.hudMirror);
+  if(S.hud){ paintHud(); if(!store.get("hudTip",false)){ store.set("hudTip",true); toast("Lay the phone flat under the windscreen at night. Mirror flips it for the reflection."); }
+    document.documentElement.requestFullscreen?.().catch(()=>{}); }
+  else if(document.fullscreenElement) document.exitFullscreen?.().catch(()=>{});
+}
+function paintHud(){
+  const kmh=Math.round((S.speed||0)*3.6); $("hudSpd").textContent=kmh; $("hudSpd").classList.toggle("over", !!(S.limit && kmh>S.limit+5));
+  const h=S.hudInfo; $("hudArrow").innerHTML=S.nav&&h?h.arrow:""; $("hudDist").textContent=S.nav&&h?h.dist:"";
+  $("hudIns").textContent=S.nav&&h?h.ins:(S.limit?"Limit "+S.limit+" km/h":""); $("hudEta").textContent=S.nav&&h?"ETA "+h.eta:"";
+}
+$("hudExit").onclick=()=>toggleHud(false);
+$("hudMirror").onclick=()=>{ S.hudMirror=!S.hudMirror; store.set("hudMirror",S.hudMirror); $("hudIn").classList.toggle("mirror",S.hudMirror); };
+$("spdBox").onclick=()=>toggleHud(true);
+
+/* ---------------- planned drives (leave-by reminders) ---------------- */
+function dayTime(ms){ const d=new Date(ms), today=new Date(); const same=d.toDateString()===today.toDateString();
+  return (same?"":d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})+" ")+clock(d); }
+function gcalStamp(ms){ return new Date(ms).toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,""); }
+async function predictTime(r, arriveMs){
+  if(!S.ttKey || !motorised()) return null;
+  try{ const from=S.pos||{lat:r.pts[0].lat,lng:r.pts[0].lng};
+    const u=CFG.tomtom+"/routing/1/calculateRoute/"+from.lat.toFixed(6)+","+from.lng.toFixed(6)+":"+S.dest.lat.toFixed(6)+","+S.dest.lng.toFixed(6)+"/json?key="+encodeURIComponent(S.ttKey)+
+      "&traffic=true&routeRepresentation=summaryOnly&travelMode="+(S.mode==="moto"?"motorcycle":"car")+"&arriveAt="+encodeURIComponent(new Date(arriveMs).toISOString().replace(/\.\d{3}Z$/,"Z"));
+    const j=await (await fetch(u)).json(); return j.routes?.[0]?.summary?.travelTimeInSeconds||null; }catch(e){ return null; }
+}
+function openPlan(){
+  const r=S.routes[S.sel]; if(!r||!S.dest) return;
+  const d=new Date(Date.now()+3600e3); d.setMinutes(Math.ceil(d.getMinutes()/15)*15,0,0);
+  const local=new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16);
+  openSheet('<div class="grab"></div><div class="hd"><h2>Plan this drive</h2><p>'+esc(S.dest.name)+' · '+(MODES[S.mode]||MODES.car).label+'</p></div>'+
+    '<label class="sec" for="planAt">Arrive by</label><input class="field" id="planAt" type="datetime-local" value="'+local+'">'+
+    '<div class="sec">Leave by</div><div class="plan-leave" id="planLeave">--:--</div><p class="hint" id="planNote" style="margin-top:2px"></p>'+
+    '<div class="row"><button class="btn go" id="planSave">Remind me</button></div>'+
+    '<div class="row"><a class="btn sm" id="planCal" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">📅 Add to Google Calendar</a><button class="btn sm" id="planBack">Back to routes</button></div>'+
+    '<p class="hint">The reminder shows while Waveguide is open. The calendar event reminds you even when it is closed.</p>');
+  let plan=null;
+  const calc=async()=>{
+    const arrive=new Date($("planAt").value).getTime(); if(!isFinite(arrive)) return;
+    let secs=r.eff, note="Based on today's route time plus 10 minutes buffer.";
+    const pred=await predictTime(r, arrive); if(pred){ secs=pred; note="Uses TomTom's predicted traffic for that time, plus 10 minutes buffer."; }
+    const leave=arrive-(secs+600)*1000;
+    $("planLeave").textContent=dayTime(leave); $("planNote").textContent=note+(leave<Date.now()?" That's already past, so leave now.":"");
+    plan={id:Date.now().toString(36), dest:{name:S.dest.name, sub:S.dest.sub, lat:S.dest.lat, lng:S.dest.lng}, arrive, leave, mode:S.mode};
+    $("planCal").href="https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent("Drive to "+S.dest.name)+
+      "&dates="+gcalStamp(leave)+"/"+gcalStamp(arrive)+"&details="+encodeURIComponent("Leave by "+clock(new Date(leave))+" to arrive by "+clock(new Date(arrive))+". Open Waveguide to navigate.")+
+      "&location="+encodeURIComponent(S.dest.lat.toFixed(6)+","+S.dest.lng.toFixed(6));
+  };
+  $("planAt").onchange=calc; calc();
+  $("planSave").onclick=async()=>{ if(!plan) return; S.plans=[...S.plans.filter(p=>p.arrive>Date.now()), plan]; store.set("plans",S.plans);
+    try{ if("Notification" in window && Notification.permission==="default") await Notification.requestPermission(); }catch(e){}
+    toast("Reminder set: leave "+dayTime(plan.leave)); renderRouteSheet(); };
+  $("planBack").onclick=renderRouteSheet;
+}
+async function notify(title, body){
+  toast(title+" · "+body); say(title);
+  try{ if("Notification" in window && Notification.permission==="granted"){
+    const reg=await navigator.serviceWorker?.getRegistration?.(); if(reg) reg.showNotification(title,{body, icon:"icon-192.png", badge:"logo-96.png"}); else new Notification(title,{body}); } }catch(e){}
+}
+function checkPlans(){
+  const now=Date.now(); let changed=false;
+  S.plans.forEach(p=>{ if(!p.notified && now>=p.leave-10*60000 && now<p.arrive){ p.notified=true; changed=true;
+    notify("Time to leave for "+p.dest.name, "Leave by "+clock(new Date(p.leave))+" to arrive by "+clock(new Date(p.arrive))); } });
+  const keep=S.plans.filter(p=>p.arrive>now-3600e3); if(keep.length!==S.plans.length) changed=true; S.plans=keep;
+  if(changed) store.set("plans",S.plans);
+}
 
 /* ---------------- settings ---------------- */
 function openSettings(){
   const seg=(id,opts,val)=>'<div class="seg" id="'+id+'">'+opts.map(([v,l])=>'<button data-v="'+v+'" class="'+(v===val?"on":"")+'">'+l+'</button>').join("")+'</div>';
   const sw=(id,on)=>'<button class="sw'+(on?" on":"")+'" id="'+id+'" role="switch" aria-checked="'+on+'"></button>';
-  openSheet('<div class="grab"></div><div class="hd"><h2>Settings</h2><p>Saved on this phone. You have made '+S.myReports+' report'+(S.myReports===1?"":"s")+'.</p></div><div class="list">'+
-    '<div class="li"><span class="tx"><b>Voice language</b><span>Spoken directions and report names</span></span>'+seg("setLang",[["en","EN"],["ms","BM"],["zh","中文"]],S.lang)+'</div>'+
-    '<div class="li"><span class="tx"><b>Voice guidance</b><span>Turn-by-turn and hazard warnings</span></span>'+sw("setVoice",S.voice)+'</div>'+
-    '<div class="li"><span class="tx"><b>Avoid tolls</b><span>Picks a toll-free route when one is found</span></span>'+sw("setToll",S.avoidTolls)+'</div>'+
-    '<div class="li"><span class="tx"><b>Heading-up 3D view</b><span>Map turns with you while driving</span></span>'+sw("setHead",S.headUp)+'</div>'+
-    '<div class="li" style="display:block"><b>Map type</b><span style="display:block;margin-bottom:8px">Also on the map button beside the compass</span>'+seg("setMapT",Object.entries(MAPTYPES).map(([k,v])=>[k,v.label]),S.mapType)+'</div>'+
-    '<div class="li" style="display:block"><b>Shared reports</b><span style="display:block">Paste a Firebase Realtime Database URL so everyone using it sees the same reports. Leave empty to keep reports on this phone.</span>'+
-      '<input class="field" id="setSync" type="url" inputmode="url" placeholder="https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app" value="'+esc(S.syncUrl)+'"></div>'+
-    '<div class="li"><span class="tx"><b>Clear history</b><span>Recent places, Home and Work</span></span><button class="btn sm warn" id="setClear">Clear</button></div>'+
+  const row=(t,sub,ctl)=>'<div class="li"><span class="tx"><b>'+t+'</b><span>'+sub+'</span></span>'+ctl+'</div>';
+  const block=(t,sub,inner)=>'<div class="li" style="display:block"><b>'+t+'</b><span style="display:block">'+sub+'</span>'+inner+'</div>';
+  const lv=levelOf(S.points), nx=nextLevel(S.points);
+  const follows=Follow.codes.map(c=>'<div class="li"><span class="tx"><b>'+esc(Follow.data[c]?.name||c)+'</b><span>Code '+c+'</span></span><button class="btn sm" data-unfollow="'+c+'">Stop</button></div>').join("");
+  openSheet('<div class="grab"></div><div class="hd"><h2>Settings</h2><p>Saved on this phone.</p></div>'+
+    '<div class="pts"><span style="font-size:28px">🏅</span><span style="flex:1"><b>'+S.points+'</b> points<br><span>'+lv[1]+(nx?' · '+(nx[0]-S.points)+' to '+nx[1]:'')+' · '+S.myReports+' report'+(S.myReports===1?'':'s')+'</span></span></div>'+
+    '<div class="list">'+
+    '<div class="sec">Voice</div>'+
+    row('Voice language','Directions, warnings and voice commands', seg("setLang",[["en","EN"],["ms","BM"],["zh","中文"]],S.lang))+
+    row('Voice guidance','Turn-by-turn and hazard warnings', sw("setVoice",S.voice))+
+    '<div class="sec">Routes</div>'+
+    block('Travel mode','Used for new routes; you can also switch on the route screen', '<div style="margin-top:8px">'+seg("setMode",Object.entries(MODES).map(([k,m])=>[k,m.ico+" "+m.label]),S.mode)+'</div>')+
+    row('Avoid tolls','Car and motorcycle', sw("setToll",S.avoidTolls))+
+    row('Avoid highways','Car and motorcycle', sw("setHw",S.avoidHw))+
+    row('Shortest route','Shortest distance instead of fastest time', sw("setShort",S.shortest))+
+    '<div class="sec">Map</div>'+
+    block('Map type','Also on the map button', '<div style="margin-top:8px">'+seg("setMapT",Object.entries(MAPTYPES).map(([k,v])=>[k,v.label]),S.mapType)+'</div>')+
+    row('Heading-up 3D view','Map turns with you while driving', sw("setHead",S.headUp))+
+    row('HUD mode','Big mirrored speed and turns for the windscreen. Also: tap the speedometer.', '<button class="btn sm" id="setHud">Open</button>')+
+    '<div class="sec">Live traffic</div>'+
+    block('TomTom API key','Free key from developer.tomtom.com → My Dashboard. Adds coloured traffic, traffic-aware ETAs, live incidents and predicted times for planned drives.',
+      '<input class="field" id="setTT" type="text" autocomplete="off" spellcheck="false" placeholder="Paste your TomTom key" value="'+esc(S.ttKey)+'">')+
+    (S.ttKey?row('Show traffic on map','Green, orange and red roads', sw("setTraffic",S.traffic)):'')+
+    '<div class="sec">Community</div>'+
+    block('Shared database','Firebase Realtime Database URL. Shares reports and lets friends follow your live location. Leave empty to keep everything on this phone.',
+      '<input class="field" id="setSync" type="url" inputmode="url" placeholder="https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app" value="'+esc(S.syncUrl)+'">')+
+    block('Your name','Shown to friends when you share live location','<input class="field" id="setName" type="text" maxlength="40" placeholder="e.g. William" value="'+esc(S.myName)+'">')+
+    block('Follow a friend','Enter the code from their live location link','<div class="row" style="margin-top:8px"><input class="field" id="setFollow" type="text" maxlength="8" placeholder="Code" style="margin:0;flex:1;text-transform:uppercase"><button class="btn sm" id="setFollowBtn">Follow</button></div>')+
+    follows+
+    '<div class="sec">Data</div>'+
+    row('Clear history','Recent places, Home, Work and planned drives', '<button class="btn sm warn" id="setClear">Clear</button>')+
     '</div><div class="row"><button class="btn" id="setDone">Done</button></div>'+
-    '<p class="hint">Map © OpenStreetMap contributors · OpenFreeMap · Routing OSRM · Search Photon · Limits & stations Overpass</p>');
+    '<p class="hint">Map © OpenStreetMap contributors · OpenFreeMap · Routing OSRM & Valhalla (FOSSGIS) · Search Photon · Places Overpass · Traffic © TomTom · Imagery © Esri</p>');
   const segBind=(id,fn)=>$(id).querySelectorAll("button").forEach(b=>b.onclick=()=>{ $(id).querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b)); fn(b.dataset.v); });
-  const swBind=(id,fn)=>$(id).onclick=()=>{ const on=!$(id).classList.contains("on"); $(id).classList.toggle("on",on); $(id).setAttribute("aria-checked",on); fn(on); };
+  const swBind=(id,fn)=>{ if(!$(id)) return; $(id).onclick=()=>{ const on=!$(id).classList.contains("on"); $(id).classList.toggle("on",on); $(id).setAttribute("aria-checked",on); fn(on); }; };
   segBind("setLang",v=>{ S.lang=v; store.set("lang",v); drawReports(); say(v==="ms"?"Bahasa Melayu":v==="zh"?"中文语音":"English voice"); });
   swBind("setVoice",on=>{ S.voice=on; store.set("voice",on); paintVoice(); });
+  segBind("setMode",v=>{ S.mode=v; store.set("mode",v); });
   swBind("setToll",on=>{ S.avoidTolls=on; store.set("avoidTolls",on); });
+  swBind("setHw",on=>{ S.avoidHw=on; store.set("avoidHw",on); });
+  swBind("setShort",on=>{ S.shortest=on; store.set("shortest",on); });
   swBind("setHead",on=>{ S.headUp=on; store.set("headUp",on); });
+  swBind("setTraffic",on=>setTraffic(on));
   segBind("setMapT",v=>setMapType(v));
-  $("setSync").onchange=e=>{ S.syncUrl=e.target.value.trim(); store.set("syncUrl",S.syncUrl);
-    if(S.syncUrl && !Sync.base()) toast("That doesn't look like a Firebase database URL."); else { toast(S.syncUrl?"Shared reports on":"Reports stay on this phone"); loadReports(); } };
-  $("setClear").onclick=()=>{ S.recent=[]; S.saved={}; store.set("recent",[]); store.set("saved",{}); renderChips(); toast("History cleared"); };
-  $("setDone").onclick=()=>{ $("setSync").dispatchEvent(new Event("change")); afterSheet(); };
+  $("setHud").onclick=()=>{ closeSheet(); toggleHud(true); };
+  $("setTT").onchange=e=>{ const k=e.target.value.trim(); if(k===S.ttKey) return; S.ttKey=k; store.set("ttKey",k);
+    if(map.getLayer("ttflow")) map.removeLayer("ttflow"); if(map.getSource("ttflow")) map.removeSource("ttflow");
+    if(k){ addTrafficLayer(); loadIncidents(); toast("Live traffic on"); } else { S.incidents=[]; drawReports(); toast("Live traffic off"); } };
+  $("setSync").onchange=e=>{ const v=e.target.value.trim(); if(v===S.syncUrl) return; S.syncUrl=v; store.set("syncUrl",v);
+    if(v && !Sync.base()) toast("That doesn't look like a Firebase database URL."); else { toast(v?"Shared database on":"Everything stays on this phone"); loadReports(); } };
+  $("setName").onchange=e=>{ S.myName=e.target.value.trim().slice(0,40); store.set("myName",S.myName); };
+  $("setFollowBtn").onclick=()=>{ Follow.add($("setFollow").value); openSettings(); };
+  document.querySelectorAll("[data-unfollow]").forEach(b=>b.onclick=()=>{ Follow.remove(b.dataset.unfollow); openSettings(); });
+  $("setClear").onclick=()=>{ S.recent=[]; S.saved={}; S.plans=[]; store.set("recent",[]); store.set("saved",{}); store.set("plans",[]); renderChips(); toast("History cleared"); };
+  $("setDone").onclick=()=>{ ["setTT","setSync","setName"].forEach(id=>$(id).dispatchEvent(new Event("change"))); afterSheet(); };
 }
 $("setBtn").onclick=openSettings;
 function openMapTypes(){
   let h='<div class="grab"></div><div class="hd"><h2>Map type</h2><p>Choose how the map looks. Your route stays on top.</p></div><div class="mtgrid">';
   Object.entries(MAPTYPES).forEach(([k,v])=> h+='<button class="mt'+(k===S.mapType?' on':'')+'" data-mt="'+k+'"><span class="mtsw mt-'+k+'">'+v.ico+'</span>'+v.label+'</button>');
-  h+='</div><p class="hint">Landmarks shows more shops, malls, mosques, temples, hospitals and petrol stations. Satellite imagery © Esri.</p>';
+  h+='</div>'+(S.ttKey?'<div class="li" style="margin-top:10px"><span class="tx"><b>🚦 Live traffic</b><span>Green, orange and red roads from TomTom</span></span><button class="sw'+(S.traffic?' on':'')+'" id="mtTraffic" role="switch" aria-checked="'+S.traffic+'"></button></div>':
+     '<p class="hint">Add a free TomTom key in Settings to see live traffic colours.</p>')+
+     '<p class="hint">Landmarks shows more shops, malls, mosques, temples, hospitals and petrol stations. Satellite imagery © Esri.</p>';
   openSheet(h);
+  if($("mtTraffic")) $("mtTraffic").onclick=()=>{ const on=!S.traffic; setTraffic(on); $("mtTraffic").classList.toggle("on",on); };
   document.querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>{ setMapType(b.dataset.mt); afterSheet(); });
 }
 $("layersBtn").onclick=openMapTypes;
@@ -1013,6 +1573,13 @@ $("voiceBtn").onclick=()=>{ S.voice=!S.voice; store.set("voice",S.voice); paintV
 /* ---------------- boot ---------------- */
 paintVoice(); renderChips(); loadReports(); startGPS();
 setInterval(loadReports, 30000);
+setInterval(()=>{ if(S.ttKey) loadIncidents().then(()=>{ if(S.nav) buildProgress(); }); }, 300000);
+setInterval(checkPlans, 60000); setTimeout(checkPlans, 3000);
+if(S.ttKey) setTimeout(loadIncidents, 2500);
+// open a friend's live-location link: #follow=CODE&db=host
+(function(){ const h=location.hash.slice(1); const m=h.match(/^follow=([A-Za-z0-9]{4,8})(?:&db=([^&]+))?/);
+  if(m){ Follow.add(m[1], m[2]?decodeURIComponent(m[2]):""); try{ history.replaceState(null,"",location.pathname); }catch(e){} }
+  Follow.start(); if(Follow.codes.length) Follow.poll(); })();
 if("serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
 if(location.protocol==="file:") setTimeout(()=>toast("Open this over https (e.g. GitHub Pages) so your phone allows GPS."),1500);
 </script>
