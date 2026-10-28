@@ -1,0 +1,890 @@
+<!doctype html>
+<html lang="en" data-theme="day">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0f1d33">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Waveguide">
+<title>Waveguide</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Saira+Semi+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: full-bleed tilted map. Idle: "Where to?" pill + chips on top, bottom sheet for routes/reports/settings.
+   Driving: navy maneuver panel on top, speed cluster bottom-left, report button bottom-right, trip bar along the bottom. */
+:root{
+  --navy:#0f1d33; --navy-2:#1b2d4d; --copper:#c8743a; --copper-ink:#ffffff;
+  --signal:#ffc21a; --signal-ink:#2b1f00; --danger:#e0412f; --ok:#1f9d6b;
+  --route:#2b7fff; --route-alt:#8f9bb0; --casing:#ffffff;
+  --bg:#e9edf3; --surface:#ffffff; --surface-2:#eff2f7; --fg:#0f1d33; --muted:#59657d; --line:#d8dee8;
+  --shadow:0 8px 28px rgba(15,29,51,.22);
+  --f-display:"Saira Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+:root[data-theme="night"]{
+  --navy:#0d1830; --navy-2:#1d3054;
+  --route:#4d97ff; --route-alt:#55637d; --casing:#0b1322;
+  --bg:#0b1322; --surface:#16223a; --surface-2:#1f2d49; --fg:#e8eef8; --muted:#9aa8c2; --line:#2b3b5a;
+  --shadow:0 8px 28px rgba(0,0,0,.55);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font:15px/1.4 var(--f-body);overflow:hidden;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+input{-webkit-user-select:text;user-select:text}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+button:focus-visible,input:focus-visible{outline:3px solid var(--route);outline-offset:2px}
+#map{position:fixed;inset:0;background:var(--bg)}
+.maplibregl-ctrl-attrib{font-size:10px}
+.maplibregl-ctrl-bottom-left,.maplibregl-ctrl-bottom-right{bottom:calc(env(safe-area-inset-bottom,0px) + var(--sheet-h,0px))}
+
+/* ---------- top: search ---------- */
+#top{position:fixed;z-index:500;left:0;right:0;top:0;pointer-events:none;
+  padding:calc(env(safe-area-inset-top,0px) + 10px) max(12px,env(safe-area-inset-right,0px)) 0 max(12px,env(safe-area-inset-left,0px));
+  display:flex;flex-direction:column;gap:8px}
+#top>*{pointer-events:auto}
+.search{display:flex;align-items:center;gap:6px;background:var(--surface);border-radius:999px;box-shadow:var(--shadow);padding:5px 5px 5px 8px}
+.mark{flex:none;width:36px;height:36px;border-radius:50%;background:var(--navy);display:grid;place-items:center}
+.mark svg{width:22px;height:22px}
+.search input{flex:1;min-width:0;border:0;background:transparent;color:var(--fg);font:700 17px var(--f-body);padding:8px 4px;outline:none}
+.search input::placeholder{color:var(--muted);font-weight:400}
+.ib{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:18px;color:var(--muted)}
+.ib svg{width:22px;height:22px}
+#results{background:var(--surface);border-radius:18px;box-shadow:var(--shadow);overflow:hidden auto;max-height:55vh}
+#results .lh{padding:10px 16px 4px;font:600 12px var(--f-display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+#results button{display:flex;gap:12px;align-items:center;width:100%;text-align:left;padding:11px 16px;border-top:1px solid var(--line)}
+#results .ico{flex:none;width:32px;height:32px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-size:15px}
+#results .tx{min-width:0;flex:1}
+#results b{display:block;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#results span.s{display:block;color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chips{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;display:flex;align-items:center;gap:6px;background:var(--surface);border-radius:999px;padding:8px 13px;box-shadow:0 2px 10px rgba(15,29,51,.16);font-weight:700;font-size:13px;white-space:nowrap}
+.chip.saved{background:var(--navy);color:#fff}
+.chip.fuel{background:var(--copper);color:var(--copper-ink)}
+
+/* ---------- floating buttons ---------- */
+.fabs{position:fixed;z-index:500;display:flex;flex-direction:column;gap:10px;transition:bottom .25s}
+#fabR{right:max(12px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + var(--sheet-h,0px) + 14px)}
+.fab{width:52px;height:52px;border-radius:50%;background:var(--surface);color:var(--fg);box-shadow:var(--shadow);display:grid;place-items:center;font:700 13px var(--f-display);letter-spacing:.04em}
+.fab svg{width:24px;height:24px}
+.fab.on{color:var(--route)}
+.fab.report{width:62px;height:62px;background:var(--signal);color:var(--signal-ink)}
+.fab.report svg{width:30px;height:30px}
+#compass svg{transition:transform .3s}
+
+/* ---------- speed cluster ---------- */
+#speedo{position:fixed;z-index:650;left:max(12px,env(safe-area-inset-left,0px));bottom:calc(env(safe-area-inset-bottom,0px) + var(--sheet-h,0px) + 14px);display:flex;flex-direction:column;gap:8px;align-items:center;transition:bottom .25s}
+.limit{width:56px;height:56px;border-radius:50%;background:#fff;border:6px solid #d42b1e;display:grid;place-items:center;color:#111;box-shadow:var(--shadow)}
+.limit b{font:700 22px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.limit.est{border-style:dashed}
+.spd{width:66px;height:66px;border-radius:50%;background:var(--surface);box-shadow:var(--shadow);display:grid;place-items:center;text-align:center;line-height:1;border:3px solid var(--line)}
+.spd b{font:700 26px var(--f-display);font-variant-numeric:tabular-nums;display:block}
+.spd small{font-size:10px;color:var(--muted);letter-spacing:.04em}
+.spd.over{background:var(--danger);border-color:var(--danger);color:#fff}
+.spd.over small{color:#fff}
+
+/* ---------- bottom sheet ---------- */
+#sheet{position:fixed;z-index:800;left:0;right:0;bottom:0;background:var(--surface);border-radius:22px 22px 0 0;box-shadow:var(--shadow);
+  padding:10px max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 16px) max(16px,env(safe-area-inset-left,0px));
+  max-height:66vh;overflow-y:auto;transition:transform .25s}
+#sheet.closed{transform:translateY(110%)}
+.grab{width:42px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 10px}
+.hd h2{margin:0;font:700 25px/1.1 var(--f-display);text-wrap:balance}
+.hd p{margin:2px 0 12px;color:var(--muted);font-size:13px}
+.routes{display:flex;flex-direction:column;gap:8px}
+.rc{display:grid;grid-template-columns:1fr auto;gap:3px 10px;text-align:left;padding:12px 14px;border:2px solid var(--line);border-radius:16px;background:var(--surface)}
+.rc.sel{border-color:var(--route);background:color-mix(in srgb,var(--route) 7%,var(--surface))}
+.rc .t{font:700 24px/1.05 var(--f-display);font-variant-numeric:tabular-nums}
+.rc .d{font:600 15px var(--f-display);color:var(--muted);align-self:center;font-variant-numeric:tabular-nums}
+.rc .via{grid-column:1/-1;color:var(--muted);font-size:13px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tag{font:700 11px var(--f-body);letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:var(--surface-2);color:var(--fg)}
+.tag.best{background:var(--ok);color:#fff}
+.tag.toll{background:var(--navy);color:#fff}
+.tag.alert{background:var(--signal);color:var(--signal-ink)}
+.row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.btn{flex:1;min-width:0;padding:13px 14px;border-radius:14px;font-weight:700;background:var(--surface-2);text-align:center}
+.btn.go{background:var(--route);color:#fff;font:700 20px var(--f-display);letter-spacing:.06em;flex:2}
+.btn.sm{flex:none;padding:9px 13px;font-size:13px}
+.btn.warn{background:var(--danger);color:#fff}
+.hint{color:var(--muted);font-size:13px;margin:12px 0 0}
+.stop{display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:8px 12px;border-radius:12px;background:var(--surface-2);font-size:14px}
+.stop b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* report grid */
+.hzgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.hz{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;border-radius:16px;background:var(--surface-2);font-size:12px;font-weight:700;text-align:center;line-height:1.15}
+.hz i{font-style:normal;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:24px;background:var(--surface)}
+
+/* lists (fuel, settings) */
+.list{display:flex;flex-direction:column}
+.li{display:flex;align-items:center;gap:12px;padding:12px 2px;border-top:1px solid var(--line);text-align:left;width:100%}
+.li:first-child{border-top:0}
+.li .tx{flex:1;min-width:0}
+.li b{display:block}
+.li span{color:var(--muted);font-size:13px}
+.li .dd{font:600 15px var(--f-display);color:var(--muted);font-variant-numeric:tabular-nums}
+.seg{display:flex;background:var(--surface-2);border-radius:12px;padding:3px;gap:3px}
+.seg button{padding:7px 11px;border-radius:9px;font-weight:700;font-size:13px;color:var(--muted)}
+.seg button.on{background:var(--surface);color:var(--fg);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.sw{width:46px;height:28px;border-radius:999px;background:var(--line);position:relative;flex:none;transition:background .2s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.sw.on{background:var(--ok)}
+.sw.on::after{transform:translateX(18px)}
+.field{width:100%;margin-top:8px;padding:11px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface-2);color:var(--fg);font:14px var(--f-body)}
+
+/* ---------- navigation ---------- */
+#navtop{position:fixed;z-index:700;left:0;right:0;top:0;
+  padding:calc(env(safe-area-inset-top,0px) + 8px) max(10px,env(safe-area-inset-right,0px)) 0 max(10px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:6px;align-items:flex-start;pointer-events:none}
+#navtop>*{pointer-events:auto}
+.man{align-self:stretch;background:var(--navy);color:#fff;border-radius:20px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;padding:12px 14px}
+.arrow{flex:none;width:62px;height:62px;border-radius:16px;background:var(--navy-2);display:grid;place-items:center}
+.arrow svg{width:50px;height:50px}
+.man .dist{font:700 36px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.man .ins{font:600 18px/1.15 var(--f-display);text-wrap:balance}
+.man .road{font-size:14px;opacity:.8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.then{display:inline-flex;gap:6px;align-items:center;background:var(--navy-2);color:#fff;font:600 14px var(--f-display);padding:6px 12px;border-radius:10px;box-shadow:var(--shadow)}
+#alert{align-self:stretch;background:var(--signal);color:var(--signal-ink);border-radius:16px;padding:10px 12px;font:700 16px var(--f-display);box-shadow:var(--shadow);display:flex;gap:10px;align-items:center}
+#alert .ae{font-size:26px}
+#alert .at{flex:1;min-width:0}
+#alert button{padding:8px 12px;border-radius:10px;background:rgba(0,0,0,.12);font:700 14px var(--f-body)}
+#tripbar{position:fixed;z-index:700;left:0;right:0;bottom:0;background:var(--surface);box-shadow:var(--shadow);border-radius:22px 22px 0 0;
+  padding:12px max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 12px) max(16px,env(safe-area-inset-left,0px));display:flex;align-items:center;gap:10px}
+.eta{flex:1;min-width:0}
+.eta .big{font:700 28px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.eta .sub{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb{flex:none;width:46px;height:46px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;font-size:20px}
+.tb svg{width:22px;height:22px}
+.tb.end{width:auto;padding:0 18px;border-radius:999px;background:var(--danger);color:#fff;font-weight:700}
+
+/* ---------- markers ---------- */
+.me{width:44px;height:44px}
+.me svg{width:44px;height:44px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.35))}
+.hzpin{width:40px;height:40px;border-radius:50%;background:var(--surface);display:grid;place-items:center;font-size:21px;box-shadow:0 3px 10px rgba(0,0,0,.3);border:3px solid var(--signal);cursor:pointer}
+.destpin{width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--danger);border:4px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.4)}
+.stoppin{width:22px;height:22px;border-radius:50%;background:var(--copper);border:4px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.fuelpin{width:30px;height:30px;border-radius:50%;background:var(--copper);color:#fff;display:grid;place-items:center;font-size:15px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35);cursor:pointer}
+.maplibregl-popup-content{background:var(--surface);color:var(--fg);border-radius:14px;padding:12px 14px;box-shadow:var(--shadow);font-family:var(--f-body)}
+.maplibregl-popup-tip{border-top-color:var(--surface)!important;border-bottom-color:var(--surface)!important}
+.pop b{font:700 17px var(--f-display)}
+.pop .m{color:var(--muted);font-size:13px}
+
+#toast{position:fixed;z-index:900;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + var(--sheet-h,0px) + 96px);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;max-width:calc(100% - 32px);text-align:center;opacity:0;transition:opacity .2s;pointer-events:none}
+#toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<!-- idle: search -->
+<div id="top">
+  <div class="search">
+    <span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 15c2.2 0 2.2-6 4.5-6s2.2 6 4.5 6 2.2-6 4.5-6S18.8 15 21 15" fill="none" stroke="#c8743a" stroke-width="2.6" stroke-linecap="round"/></svg></span>
+    <input id="q" type="search" placeholder="Where to?" autocomplete="off" enterkeyhint="search" aria-label="Search destination">
+    <button class="ib" id="clearQ" aria-label="Clear search" hidden>✕</button>
+    <button class="ib" id="setBtn" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg></button>
+  </div>
+  <div id="results" hidden></div>
+  <div class="chips" id="chips"></div>
+</div>
+
+<!-- right-side buttons -->
+<div class="fabs" id="fabR">
+  <button class="fab" id="compass" aria-label="Toggle heading-up / north-up"><svg viewBox="0 0 24 24"><path d="M12 2l4 10h-8z" fill="#e0412f"/><path d="M12 22l-4-10h8z" fill="currentColor" opacity=".55"/></svg></button>
+  <button class="fab" id="voiceBtn" aria-label="Voice guidance on or off"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path id="voiceWaves" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+  <button class="fab" id="locBtn" aria-label="Centre on my location"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3.5" fill="currentColor"/><circle cx="12" cy="12" r="8"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/></svg></button>
+  <button class="fab report" id="reportBtn" aria-label="Report a hazard"><svg viewBox="0 0 24 24"><path d="M12 3L2 20h20z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M12 9v5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="17" r="1.4" fill="currentColor"/></svg></button>
+</div>
+
+<!-- speed cluster -->
+<div id="speedo" hidden>
+  <div class="limit" id="limit" hidden><b id="limitV">–</b></div>
+  <div class="spd" id="spdBox"><div><b id="spd">0</b><small>km/h</small></div></div>
+</div>
+
+<!-- bottom sheet -->
+<div id="sheet" class="closed" role="dialog" aria-live="polite"></div>
+
+<!-- navigation -->
+<div id="navtop" hidden>
+  <div class="man">
+    <div class="arrow" id="navArrow"></div>
+    <div style="min-width:0;flex:1">
+      <div class="dist" id="navDist">—</div>
+      <div class="ins" id="navIns">Starting…</div>
+      <div class="road" id="navRoad"></div>
+    </div>
+  </div>
+  <div class="then" id="navThen" hidden></div>
+  <div id="alert" hidden></div>
+</div>
+<div id="tripbar" hidden>
+  <div class="eta">
+    <div class="big" id="etaClock">--:--</div>
+    <div class="sub" id="etaSub">—</div>
+  </div>
+  <button class="tb" id="navFuel" aria-label="Add a petrol stop">⛽</button>
+  <button class="tb" id="navShare" aria-label="Share ETA"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></svg></button>
+  <button class="tb end" id="endBtn">End</button>
+</div>
+
+<div id="toast" role="status"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.min.js"></script>
+<script>
+"use strict";
+/* =====================================================================
+   Waveguide — Waze-style navigation as an installable web app.
+   Free, keyless services: OpenFreeMap (vector map), OSRM (routing),
+   Photon (search), Overpass (speed limits, petrol stations).
+   Optional: Firebase Realtime Database URL for shared community reports.
+   ===================================================================== */
+const CFG = {
+  osrm: "https://router.project-osrm.org/route/v1/driving/",
+  photon: "https://photon.komoot.io/api/",
+  overpass: "https://overpass-api.de/api/interpreter",
+  styleDay: "https://tiles.openfreemap.org/styles/liberty",
+  styleNight: "https://tiles.openfreemap.org/styles/dark",
+  bbox: [99.6, 0.85, 119.3, 7.4], // Peninsular + East Malaysia
+};
+const QUICK = [
+  {name:"KLCC", sub:"Kuala Lumpur", lat:3.1579, lng:101.7116},
+  {name:"KLIA Terminal 1", sub:"Sepang, Selangor", lat:2.7456, lng:101.7072},
+  {name:"KL Sentral", sub:"Kuala Lumpur", lat:3.1340, lng:101.6862},
+  {name:"Penang Bridge", sub:"Pulau Pinang", lat:5.3550, lng:100.3470},
+  {name:"JB CIQ", sub:"Johor Bahru", lat:1.4630, lng:103.7640},
+  {name:"Genting Highlands", sub:"Pahang", lat:3.4236, lng:101.7932},
+];
+// ttl: minutes before a report expires. delay: minutes added to a route that passes it.
+const HZ = {
+  police:  {e:"👮", en:"Police",         ms:"Polis",          zh:"警察",   ttl:60,    delay:0},
+  accident:{e:"💥", en:"Accident",       ms:"Kemalangan",     zh:"车祸",   ttl:120,   delay:8},
+  jam:     {e:"🚦", en:"Traffic jam",    ms:"Kesesakan",      zh:"塞车",   ttl:60,    delay:6},
+  flood:   {e:"🌊", en:"Flood",          ms:"Banjir",         zh:"水灾",   ttl:360,   delay:15},
+  works:   {e:"🚧", en:"Roadworks",      ms:"Kerja jalan",    zh:"道路施工", ttl:1440,  delay:3},
+  pothole: {e:"🕳️", en:"Pothole",        ms:"Lubang jalan",   zh:"路面坑洞", ttl:4320,  delay:0},
+  camera:  {e:"📷", en:"Speed camera",   ms:"Kamera AWAS",    zh:"测速相机", ttl:43200, delay:0},
+  object:  {e:"⚠️", en:"Object on road", ms:"Objek di jalan", zh:"路上有障碍物", ttl:60, delay:1},
+};
+// Fallback limits (km/h) when OpenStreetMap has no maxspeed tag — shown with a dashed ring.
+const MY_DEFAULT_LIMIT = {motorway:110, motorway_link:60, trunk:90, trunk_link:60, primary:80, primary_link:50, secondary:70, tertiary:60, unclassified:50, residential:40, living_street:20};
+
+/* ---------------- storage ---------------- */
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem("wg_"+k); return v?JSON.parse(v):d; }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem("wg_"+k, JSON.stringify(v)); }catch(e){} }
+};
+
+/* ---------------- state ---------------- */
+const S = {
+  pos:null, heading:0, speed:0, gotFix:false,
+  dest:null, stops:[], routes:[], sel:0,
+  nav:false, R:null, lastIdx:0, spoken:{}, alerted:{}, passed:{}, lastReroute:0, rerouting:false,
+  follow:true, headUp:store.get("headUp", true),
+  voice:store.get("voice", true), lang:store.get("lang","en"),
+  avoidTolls:store.get("avoidTolls", false), theme:store.get("theme","auto"),
+  syncUrl:store.get("syncUrl",""), saved:store.get("saved",{}), recent:store.get("recent",[]),
+  reports:[], myReports:store.get("myReports",0),
+  sim:null, wake:null, limit:null, limitEst:false, slAt:0, slPos:null, lastBeep:0,
+  styleReady:false, searchMode:"dest", fuelMarkers:[]
+};
+
+/* ---------------- helpers ---------------- */
+const $ = id => document.getElementById(id);
+const rad = d => d*Math.PI/180;
+function hav(a,b){ const R=6371000,dLa=rad(b.lat-a.lat),dLo=rad(b.lng-a.lng);
+  const x=Math.sin(dLa/2)**2+Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dLo/2)**2; return 2*R*Math.asin(Math.sqrt(x)); }
+function bearing(a,b){ const y=Math.sin(rad(b.lng-a.lng))*Math.cos(rad(b.lat));
+  const x=Math.cos(rad(a.lat))*Math.sin(rad(b.lat))-Math.sin(rad(a.lat))*Math.cos(rad(b.lat))*Math.cos(rad(b.lng-a.lng));
+  return (Math.atan2(y,x)*180/Math.PI+360)%360; }
+function segProj(p,a,b){ const k=Math.cos(rad(p.lat));
+  const ax=(a.lng-p.lng)*k*111320, ay=(a.lat-p.lat)*110540, bx=(b.lng-p.lng)*k*111320, by=(b.lat-p.lat)*110540;
+  const dx=bx-ax, dy=by-ay, L=dx*dx+dy*dy; let t=L?-(ax*dx+ay*dy)/L:0; t=Math.max(0,Math.min(1,t));
+  return {d:Math.hypot(ax+t*dx, ay+t*dy), t}; }
+function fmtDist(m){ if(m<975) return (m<100?Math.round(m/10)*10:Math.round(m/50)*50)+" m"; return (m<10000?(m/1000).toFixed(1):Math.round(m/1000))+" km"; }
+function fmtDur(s){ const m=Math.max(1,Math.round(s/60)); if(m<60) return m+" min"; return Math.floor(m/60)+" h "+(m%60)+" min"; }
+function clock(d){ return d.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",hour12:false}); }
+function esc(s){ return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function cssVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+let toastT; function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),3200); }
+const ll = p => [p.lng, p.lat];
+
+/* ---------------- language ---------------- */
+const T = {
+  en:{ mod:{left:"Turn left",right:"Turn right","slight left":"Bear left","slight right":"Bear right","sharp left":"Turn sharp left","sharp right":"Turn sharp right",uturn:"Make a U-turn",straight:"Continue straight"},
+       keep:{left:"Keep left",right:"Keep right","slight left":"Keep left","slight right":"Keep right",straight:"Keep straight"},
+       depart:"Head out", arrive:"You have arrived", stop:"You've reached your stop", onto:" onto ", exit:"Take the exit", exitL:" on the left", exitR:" on the right",
+       ramp:"Take the ramp", merge:"Merge", rb:n=>"At the roundabout, take exit "+n, rbx:"Exit the roundabout",
+       inX:d=>"In "+d+", ", reroute:"Recalculating route", start:"Starting navigation", then:"Then: ",
+       ahead:n=>n+" reported ahead", stillThere:"Still there?", speeding:"Slow down",
+       dist:m=>{ if(m>=950){const k=Math.round(m/100)/10; return k+(k===1?" kilometre":" kilometres");} return Math.max(100,Math.round(m/100)*100)+" metres"; },
+       voices:["en-MY","en-GB","en-SG","en-US","en"], label:"EN" },
+  ms:{ mod:{left:"Belok kiri",right:"Belok kanan","slight left":"Ikut kiri","slight right":"Ikut kanan","sharp left":"Belok tajam ke kiri","sharp right":"Belok tajam ke kanan",uturn:"Buat pusingan U",straight:"Terus"},
+       keep:{left:"Ikut kiri",right:"Ikut kanan","slight left":"Ikut kiri","slight right":"Ikut kanan",straight:"Terus"},
+       depart:"Mulakan perjalanan", arrive:"Anda telah tiba", stop:"Anda telah tiba di hentian", onto:" ke ", exit:"Ambil susur keluar", exitL:" di kiri", exitR:" di kanan",
+       ramp:"Masuk susur", merge:"Bergabung", rb:n=>"Di bulatan, ambil susur keluar ke-"+n, rbx:"Keluar dari bulatan",
+       inX:d=>"Dalam "+d+", ", reroute:"Mengira semula laluan", start:"Navigasi dimulakan", then:"Kemudian: ",
+       ahead:n=>n+" dilaporkan di hadapan", stillThere:"Masih ada?", speeding:"Perlahankan kenderaan",
+       dist:m=>{ if(m>=950) return (Math.round(m/100)/10)+" kilometer"; return Math.max(100,Math.round(m/100)*100)+" meter"; },
+       voices:["ms-MY","ms","id-ID"], label:"BM" },
+  zh:{ mod:{left:"左转",right:"右转","slight left":"稍向左行驶","slight right":"稍向右行驶","sharp left":"向左急转","sharp right":"向右急转",uturn:"掉头",straight:"直行"},
+       keep:{left:"靠左",right:"靠右","slight left":"靠左","slight right":"靠右",straight:"直行"},
+       depart:"出发", arrive:"您已到达目的地", stop:"已到达途经点", onto:"，进入", exit:"驶出匝道", exitL:"（左侧）", exitR:"（右侧）",
+       ramp:"驶入匝道", merge:"并道", rb:n=>"在环岛从第"+n+"个出口驶出", rbx:"驶出环岛",
+       inX:d=>d+"后，", reroute:"正在重新规划路线", start:"开始导航", then:"然后：",
+       ahead:n=>"前方有"+n, stillThere:"还在吗？", speeding:"您已超速",
+       dist:m=>{ if(m>=950) return (Math.round(m/100)/10)+"公里"; return Math.max(100,Math.round(m/100)*100)+"米"; },
+       voices:["zh-CN","zh-SG","zh-TW","zh-HK","zh"], label:"中文" },
+};
+const L = () => T[S.lang] || T.en;
+const hzName = k => HZ[k][S.lang] || HZ[k].en;
+
+/* ---------------- theme + map ---------------- */
+function isNight(){ if(S.theme==="day") return false; if(S.theme==="night") return true; const h=new Date().getHours(); return h>=19 || h<7; }
+function applyTheme(){ document.documentElement.dataset.theme = isNight()?"night":"day"; }
+applyTheme();
+let nightStyleOk = true;
+const map = new maplibregl.Map({
+  container:"map", style: isNight()?CFG.styleNight:CFG.styleDay,
+  center:[101.6869,3.139], zoom:12, attributionControl:{compact:true},
+  dragRotate:true, pitchWithRotate:true, maxPitch:65
+});
+map.on("error", e => {
+  // If the night style can't load, fall back to the day style once.
+  if(!S.styleReady && nightStyleOk && isNight()){ nightStyleOk=false; map.setStyle(CFG.styleDay); }
+});
+map.on("style.load", () => { S.styleReady=true; addRouteLayers(); if(S.nav) drawNavRoute(); else if(S.routes.length) drawRoutes(); });
+function setMapStyle(){ applyTheme(); S.styleReady=false; map.setStyle(isNight()&&nightStyleOk?CFG.styleNight:CFG.styleDay); }
+
+function addRouteLayers(){
+  if(map.getSource("routes")) return;
+  map.addSource("routes",{type:"geojson",data:{type:"FeatureCollection",features:[]}});
+  const before = map.getStyle().layers.find(l => l.type==="symbol")?.id; // keep labels above the route
+  map.addLayer({id:"alt-line",type:"line",source:"routes",filter:["==",["get","sel"],false],
+    layout:{"line-join":"round","line-cap":"round"},paint:{"line-color":cssVar("--route-alt"),"line-width":["interpolate",["linear"],["zoom"],8,4,16,9],"line-opacity":.9}}, before);
+  map.addLayer({id:"sel-casing",type:"line",source:"routes",filter:["==",["get","sel"],true],
+    layout:{"line-join":"round","line-cap":"round"},paint:{"line-color":cssVar("--casing"),"line-width":["interpolate",["linear"],["zoom"],8,7,16,15]}}, before);
+  map.addLayer({id:"sel-line",type:"line",source:"routes",filter:["==",["get","sel"],true],
+    layout:{"line-join":"round","line-cap":"round"},paint:{"line-color":cssVar("--route"),"line-width":["interpolate",["linear"],["zoom"],8,4.5,16,10]}}, before);
+  map.on("click","alt-line", e => { if(S.nav) return; const i=e.features?.[0]?.properties?.i; if(i!=null){ S.sel=+i; drawRoutes(); renderRouteSheet(); } });
+}
+function setRouteData(features){ const src=map.getSource("routes"); if(src) src.setData({type:"FeatureCollection",features}); }
+
+// user moves the map → stop following
+map.on("dragstart", e => { if(e.originalEvent){ S.follow=false; $("locBtn").classList.remove("on"); } });
+map.on("rotate", () => { $("compass").querySelector("svg").style.transform="rotate("+(-map.getBearing())+"deg)"; });
+// long-press / right-click drops a pin
+map.on("contextmenu", e => dropPin(e.lngLat));
+(() => { let t=null, start=null; const c=map.getCanvasContainer();
+  c.addEventListener("touchstart", ev => { if(ev.touches.length!==1) return; const tc=ev.touches[0], r=c.getBoundingClientRect();
+    start={x:tc.clientX-r.left, y:tc.clientY-r.top}; t=setTimeout(()=>{ dropPin(map.unproject([start.x,start.y])); t=null; }, 600); }, {passive:true});
+  const cancel = ev => { if(!t) return; if(ev.type==="touchmove"){ const tc=ev.touches[0], r=c.getBoundingClientRect(); if(Math.hypot(tc.clientX-r.left-start.x, tc.clientY-r.top-start.y)<10) return; } clearTimeout(t); t=null; };
+  ["touchmove","touchend","touchcancel"].forEach(n => c.addEventListener(n, cancel, {passive:true}));
+})();
+function dropPin(lngLat){ if(S.nav) return; navigator.vibrate?.(30);
+  setDest({name:"Dropped pin", sub:lngLat.lat.toFixed(5)+", "+lngLat.lng.toFixed(5), lat:lngLat.lat, lng:lngLat.lng}); }
+
+/* ---------------- markers ---------------- */
+const ME_SVG = '<svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="19" fill="#fff"/><circle cx="22" cy="22" r="15.5" fill="#2b7fff"/><circle cx="22" cy="22" r="19" fill="none" stroke="#c8743a" stroke-width="2.5"/><path d="M22 9.5l8 19-8-4.6-8 4.6z" fill="#fff"/></svg>';
+const meEl = document.createElement("div"); meEl.className="me"; meEl.innerHTML=ME_SVG;
+let meMarker=null, destMarker=null, stopMarkers=[], hzMarkers=[];
+function pin(cls, p, html){ const el=document.createElement("div"); el.className=cls; if(html) el.innerHTML=html; return new maplibregl.Marker({element:el, anchor: cls==="destpin"?"bottom":"center"}).setLngLat(ll(p)).addTo(map); }
+
+/* ---------------- GPS ---------------- */
+function startGPS(){
+  if(!("geolocation" in navigator)){ toast("This browser can't access GPS."); return; }
+  navigator.geolocation.watchPosition(p => {
+    if(S.sim) return;
+    onPos({lat:p.coords.latitude, lng:p.coords.longitude}, p.coords.heading, p.coords.speed);
+  }, err => { toast(err.code===1 ? "Location is blocked. Allow location for this site to navigate." : "Waiting for GPS signal…"); },
+  {enableHighAccuracy:true, maximumAge:1000, timeout:20000});
+}
+function onPos(p, heading, speed){
+  if(S.pos && hav(S.pos,p)>3) S.heading = (heading!=null && !isNaN(heading)) ? heading : bearing(S.pos,p);
+  else if(heading!=null && !isNaN(heading)) S.heading = heading;
+  if(speed!=null && !isNaN(speed)) S.speed = speed;
+  S.pos = p;
+  if(!meMarker) meMarker = new maplibregl.Marker({element:meEl, rotationAlignment:"map", pitchAlignment:"map"}).setLngLat(ll(p)).addTo(map);
+  else meMarker.setLngLat(ll(p));
+  meMarker.setRotation(S.heading);
+  if(!S.gotFix){ S.gotFix=true; if(!S.dest) map.jumpTo({center:ll(p), zoom:15}); }
+  const kmh = S.speed*3.6;
+  $("speedo").hidden = !(S.nav || kmh>5);
+  $("spd").textContent = Math.round(kmh);
+  checkSpeed(kmh);
+  if(S.nav || kmh>5) speedLimit(p);
+  if(S.nav){ navTick(p); if(S.follow) followCam(p, kmh); }
+}
+function followCam(p, kmh){
+  const zoom = kmh>90?15.6 : kmh>60?16.2 : kmh>30?16.8 : 17.3;
+  map.easeTo({center:ll(p), zoom, bearing:S.headUp?S.heading:0, pitch:S.headUp?58:0,
+    padding:{top:Math.round(innerHeight*0.38), bottom:90, left:0, right:0}, duration:S.sim?480:950, easing:t=>t});
+}
+
+/* ---------------- speed limit + speeding ---------------- */
+let slAbort;
+async function speedLimit(p){
+  if(S.slPos && hav(S.slPos,p)<200 && Date.now()-S.slAt<15000) return;
+  if(Date.now()-S.slAt<6000) return;
+  S.slAt=Date.now(); S.slPos=p;
+  const q='[out:json][timeout:8];way(around:25,'+p.lat.toFixed(6)+','+p.lng.toFixed(6)+')[highway~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street)(_link)?$"];out tags 6;';
+  slAbort?.abort(); slAbort=new AbortController();
+  try{
+    const j = await (await fetch(CFG.overpass,{method:"POST", body:"data="+encodeURIComponent(q), signal:slAbort.signal})).json();
+    const ways = (j.elements||[]).map(e=>e.tags||{});
+    if(!ways.length){ S.limit=null; paintLimit(); return; }
+    // prefer the way matching the road we're told we're on
+    const cur = S.nav && S.R ? (S.R.steps[stepAt(S.R,S.lastIdx)]||{}) : {};
+    const match = ways.find(w => (cur.name && w.name===cur.name) || (cur.ref && w.ref && w.ref.split(";").includes(cur.ref))) || ways[0];
+    const ms = parseInt(match.maxspeed,10);
+    if(ms){ S.limit=ms; S.limitEst=false; }
+    else { S.limit = MY_DEFAULT_LIMIT[match.highway]||null; S.limitEst=true; }
+    paintLimit();
+  }catch(e){ /* offline or busy: keep last value */ }
+}
+function paintLimit(){ const el=$("limit"); if(!S.limit){ el.hidden=true; return; } el.hidden=false; el.classList.toggle("est",S.limitEst); $("limitV").textContent=S.limit; }
+function checkSpeed(kmh){
+  const over = S.limit && kmh > S.limit + 5;
+  $("spdBox").classList.toggle("over", !!over);
+  if(over && S.nav && Date.now()-S.lastBeep>30000){ S.lastBeep=Date.now(); beep(2); if(!S.limitEst) say(L().speeding); }
+}
+let actx; function beep(n){ try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+  for(let i=0;i<n;i++){ const o=actx.createOscillator(), g=actx.createGain(); o.frequency.value=880; o.connect(g); g.connect(actx.destination);
+    const t=actx.currentTime+i*0.22; g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.25,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+0.16); o.start(t); o.stop(t+0.18); } }catch(e){} }
+
+/* ---------------- search ---------------- */
+let qT, qAbort;
+$("q").addEventListener("input", e => { const v=e.target.value.trim(); $("clearQ").hidden=!v; clearTimeout(qT);
+  if(v.length<3){ v ? ($("results").hidden=true) : showSuggestions(); return; } qT=setTimeout(()=>search(v),350); });
+$("q").addEventListener("focus", () => { if(!$("q").value.trim()) showSuggestions(); });
+$("q").addEventListener("keydown", e => { if(e.key==="Enter"){ clearTimeout(qT); search(e.target.value.trim()); } if(e.key==="Escape") closeSearch(); });
+$("clearQ").onclick = () => { $("q").value=""; $("clearQ").hidden=true; showSuggestions(); $("q").focus(); };
+document.addEventListener("pointerdown", e => { if(!$("top").contains(e.target)) $("results").hidden=true; });
+function closeSearch(){ $("results").hidden=true; $("q").blur(); if(S.searchMode==="stop"){ S.searchMode="dest"; $("q").placeholder="Where to?"; } }
+
+async function search(v){
+  if(!v) return;
+  const m = v.match(/^\s*(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)\s*$/);
+  if(m){ showResults([{name:"Coordinates", sub:v, lat:+m[1], lng:+m[3]}]); return; }
+  qAbort?.abort(); qAbort=new AbortController();
+  const c = S.pos || {lat:map.getCenter().lat, lng:map.getCenter().lng};
+  const url = CFG.photon+"?q="+encodeURIComponent(v)+"&limit=8&lat="+c.lat+"&lon="+c.lng+"&bbox="+CFG.bbox.join(",");
+  try{
+    const j = await (await fetch(url,{signal:qAbort.signal})).json();
+    showResults((j.features||[]).map(f => { const p=f.properties;
+      const sub=[p.street&&((p.housenumber?p.housenumber+" ":"")+p.street), p.district||p.locality, p.city, p.state].filter(Boolean);
+      const pt={lat:f.geometry.coordinates[1], lng:f.geometry.coordinates[0]};
+      return {name:p.name||p.street||"Unnamed place", sub:[...new Set(sub)].join(", "), ...pt, far: S.pos?hav(S.pos,pt):null}; }));
+  }catch(e){ if(e.name!=="AbortError") toast("Search isn't reachable right now. Check your connection."); }
+}
+function resultRow(r, ico){ const b=document.createElement("button");
+  b.innerHTML='<span class="ico">'+ico+'</span><span class="tx"><b>'+esc(r.name)+'</b><span class="s">'+esc(r.sub||"")+'</span></span>'+(r.far!=null?'<span class="s" style="color:var(--muted);font-size:13px">'+fmtDist(r.far)+'</span>':'');
+  b.onclick=()=>pickPlace(r); return b; }
+function showResults(list){
+  const box=$("results"); box.innerHTML="";
+  if(!list.length){ box.innerHTML='<div class="lh">No places found</div><button disabled><span class="tx"><span class="s">Try another spelling, or long-press the map to drop a pin.</span></span></button>'; box.hidden=false; return; }
+  list.forEach(r => box.appendChild(resultRow(r,"📍"))); box.hidden=false;
+}
+function showSuggestions(){
+  const box=$("results"); box.innerHTML="";
+  const saved=["home","work"].filter(k=>S.saved[k]).map(k=>({...S.saved[k], ico:k==="home"?"🏠":"🏢"}));
+  if(saved.length){ box.insertAdjacentHTML("beforeend",'<div class="lh">Saved</div>'); saved.forEach(r=>box.appendChild(resultRow(r,r.ico))); }
+  if(S.recent.length){ box.insertAdjacentHTML("beforeend",'<div class="lh">Recent</div>'); S.recent.forEach(r=>box.appendChild(resultRow(r,"🕘"))); }
+  box.hidden = !box.children.length;
+}
+function pickPlace(r){
+  $("results").hidden=true; $("q").blur();
+  if(S.searchMode==="stop"){ S.searchMode="dest"; $("q").placeholder="Where to?"; $("q").value=S.dest?.name||""; addStop(r); return; }
+  $("q").value=r.name; setDest(r);
+}
+function remember(p){ if(p.name==="Dropped pin") return;
+  S.recent=[{name:p.name,sub:p.sub,lat:p.lat,lng:p.lng}, ...S.recent.filter(r=>!(Math.abs(r.lat-p.lat)<1e-5&&Math.abs(r.lng-p.lng)<1e-5))].slice(0,6); store.set("recent",S.recent); }
+function renderChips(){
+  const c=$("chips"); c.innerHTML="";
+  const add=(txt,cls,fn)=>{ const b=document.createElement("button"); b.className="chip "+cls; b.textContent=txt; b.onclick=fn; c.appendChild(b); };
+  if(S.saved.home) add("🏠 Home","saved",()=>setDest(S.saved.home));
+  if(S.saved.work) add("🏢 Work","saved",()=>setDest(S.saved.work));
+  add("⛽ Petrol nearby","fuel",()=>openFuel());
+  QUICK.forEach(q=>add(q.name,"",()=>setDest(q)));
+}
+
+/* ---------------- routing ---------------- */
+async function fetchRoutes(from, stops, to){
+  const pts=[from,...stops,to].map(p=>p.lng.toFixed(6)+","+p.lat.toFixed(6)).join(";");
+  const url=CFG.osrm+pts+"?overview=full&geometries=geojson&steps=true"+(stops.length?"":"&alternatives=3");
+  const j = await (await fetch(url)).json();
+  if(j.code!=="Ok" || !j.routes?.length) throw new Error(j.message||"No driving route found.");
+  return j.routes.map(prep);
+}
+function prep(r){
+  const steps=r.legs.flatMap(l=>l.steps), pts=[], stepStart=[];
+  steps.forEach(s => { stepStart.push(Math.max(0,pts.length-1));
+    s.geometry.coordinates.forEach((xy,j) => { if(pts.length && j===0) return; pts.push({lat:xy[1], lng:xy[0]}); }); });
+  const cum=[0]; for(let i=1;i<pts.length;i++) cum[i]=cum[i-1]+hav(pts[i-1],pts[i]);
+  const toll=steps.some(s=>(s.intersections||[]).some(x=>(x.classes||[]).includes("toll")));
+  const byName={}; steps.forEach(s=>{ const n=s.ref?s.ref+(s.name?" "+s.name:""):s.name; if(n) byName[n]=(byName[n]||0)+s.distance; });
+  const via=Object.entries(byName).sort((a,b)=>b[1]-a[1]).slice(0,2).map(x=>x[0]);
+  return {steps, pts, cum, stepStart, toll, via, distance:r.distance, duration:r.duration, coords:r.geometry.coordinates};
+}
+function minDistToRoute(R,p){ let best=1e12; const step=R.pts.length>4000?2:1;
+  for(let i=0;i<R.pts.length-1;i+=step){ const d=segProj(p,R.pts[i],R.pts[Math.min(i+step,R.pts.length-1)]).d; if(d<best) best=d; } return best; }
+// Waze-style: reports on a route add delay, and the best route is chosen on adjusted time.
+function scoreRoutes(){
+  S.routes.forEach(r => { r.alerts=S.reports.filter(rep=>minDistToRoute(r,rep)<45); r.penalty=r.alerts.reduce((a,h)=>a+(HZ[h.type].delay||0),0)*60; r.eff=r.duration+r.penalty; });
+  S.routes.sort((a,b) => S.avoidTolls && a.toll!==b.toll ? (a.toll?1:-1) : a.eff-b.eff);
+}
+async function setDest(place, keepStops){
+  S.dest=place; if(!keepStops) S.stops=[]; $("results").hidden=true; clearFuel();
+  destMarker?.remove(); destMarker=pin("destpin",place);
+  remember(place);
+  const from = S.pos || {lat:map.getCenter().lat, lng:map.getCenter().lng};
+  if(!S.pos) toast("No GPS fix yet, so routing from the map centre.");
+  openSheet('<div class="grab"></div><div class="hd"><h2>'+esc(place.name)+'</h2><p>'+esc(place.sub||"")+'</p></div><p class="hint">Finding routes…</p>');
+  try{
+    S.routes = await fetchRoutes(from, S.stops, place); scoreRoutes(); S.sel=0;
+    if(S.avoidTolls && S.routes.every(r=>r.toll)) toast("Every route found uses a toll road.");
+    drawRoutes(); renderRouteSheet(); fitRoute(S.routes[0]);
+  }catch(e){
+    openSheet('<div class="grab"></div><div class="hd"><h2>'+esc(place.name)+'</h2></div><p class="hint">'+esc(e.message||"Routing isn't reachable right now.")+' Check your connection and try again.</p><div class="row"><button class="btn" id="cl">Close</button></div>');
+    $("cl").onclick=closeRoute;
+  }
+}
+function fitRoute(r){ const b=new maplibregl.LngLatBounds(); r.coords.forEach(c=>b.extend(c));
+  map.fitBounds(b,{padding:{top:150,bottom:sheetH()+40,left:40,right:80}, bearing:0, pitch:0, duration:700, maxZoom:16}); }
+function drawRoutes(){
+  stopMarkers.forEach(m=>m.remove()); stopMarkers=S.stops.map(s=>pin("stoppin",s));
+  if(!S.styleReady) return;
+  setRouteData(S.routes.map((r,i)=>({type:"Feature",properties:{sel:i===S.sel,i},geometry:{type:"LineString",coordinates:r.coords}}))
+    .sort((a,b)=>a.properties.sel-b.properties.sel));
+}
+function drawNavRoute(){ if(!S.styleReady||!S.R) return; setRouteData([{type:"Feature",properties:{sel:true,i:0},geometry:{type:"LineString",coordinates:S.R.coords}}]); }
+function renderRouteSheet(){
+  const p=S.dest, best=S.routes[0];
+  let h='<div class="grab"></div><div class="hd"><h2>'+esc(p.name)+'</h2><p>'+esc(p.sub||"")+'</p></div>';
+  S.stops.forEach((s,i)=> h+='<div class="stop">⛽ <b>Stop: '+esc(s.name)+'</b><button class="btn sm" data-rmstop="'+i+'">Remove</button></div>');
+  h+='<div class="routes">';
+  S.routes.forEach((r,i) => {
+    const arrive=clock(new Date(Date.now()+r.eff*1000));
+    const kinds=[...new Set(r.alerts.map(a=>HZ[a.type].e))].join(" ");
+    h+='<button class="rc'+(i===S.sel?" sel":"")+'" data-i="'+i+'"><span class="t">'+fmtDur(r.eff)+'</span><span class="d">'+fmtDist(r.distance)+'</span>'+
+       '<span class="via">'+(r===best&&S.routes.length>1?'<span class="tag best">Best</span>':'')+(r.toll?'<span class="tag toll">Toll</span>':'')+
+       (r.alerts.length?'<span class="tag alert">'+kinds+' '+r.alerts.length+' on route</span>':'')+
+       'via '+esc(r.via.join(", ")||"local roads")+' · arrive '+arrive+(r.penalty?' · incl. '+Math.round(r.penalty/60)+' min reported delay':'')+'</span></button>';
+  });
+  h+='</div>'+
+     '<div class="row"><button class="btn go" id="goBtn">GO</button><button class="btn" id="simBtn">Test drive</button></div>'+
+     '<div class="row"><button class="btn sm" id="stopBtn">+ Add stop</button><button class="btn sm" id="shareBtn">Share</button><button class="btn sm" id="homeBtn">Set as Home</button><button class="btn sm" id="workBtn">Set as Work</button><button class="btn sm" id="closeBtn">Close</button></div>'+
+     '<p class="hint">Times are typical free-flow estimates plus delays from reports. Tap a grey line on the map to pick it.</p>';
+  openSheet(h);
+  document.querySelectorAll(".rc").forEach(b => b.onclick=()=>{ S.sel=+b.dataset.i; drawRoutes(); renderRouteSheet(); });
+  document.querySelectorAll("[data-rmstop]").forEach(b => b.onclick=()=>{ S.stops.splice(+b.dataset.rmstop,1); setDest(S.dest,true); });
+  $("goBtn").onclick=()=>startNav(false); $("simBtn").onclick=()=>startNav(true);
+  $("stopBtn").onclick=()=>{ S.searchMode="stop"; $("q").value=""; $("q").placeholder="Add a stop (or tap Petrol nearby)"; $("q").focus(); showSuggestions(); };
+  $("shareBtn").onclick=()=>shareTrip(false);
+  $("homeBtn").onclick=()=>savePlace("home"); $("workBtn").onclick=()=>savePlace("work"); $("closeBtn").onclick=closeRoute;
+}
+function addStop(place){ S.stops=[place]; if(S.nav) rerouteWithStops(); else setDest(S.dest,true); toast("Stop added: "+place.name); }
+function savePlace(k){ S.saved[k]={...S.dest}; store.set("saved",S.saved); renderChips(); toast((k==="home"?"Home":"Work")+" saved"); }
+function closeRoute(){ closeSheet(); setRouteData([]); destMarker?.remove(); stopMarkers.forEach(m=>m.remove()); S.dest=null; S.stops=[]; S.routes=[]; $("q").value=""; $("clearQ").hidden=true; }
+
+/* ---------------- sheet ---------------- */
+function openSheet(html){ const s=$("sheet"); s.innerHTML=html; s.scrollTop=0; s.classList.remove("closed"); requestAnimationFrame(()=>setSheetVar(sheetH())); }
+function closeSheet(){ $("sheet").classList.add("closed"); setSheetVar(S.nav?tripH():0); }
+function sheetH(){ const s=$("sheet"); return s.classList.contains("closed")?0:s.offsetHeight; }
+function tripH(){ return $("tripbar").offsetHeight||84; }
+function setSheetVar(px){ document.documentElement.style.setProperty("--sheet-h", px+"px");
+  // tall sheets: tuck the floating buttons away so they never collide with the search bar
+  const tall = px > innerHeight - 340; $("fabR").style.visibility = tall?"hidden":""; $("speedo").style.visibility = tall?"hidden":""; }
+function afterSheet(){ if(S.nav) closeSheet(); else if(S.routes.length) renderRouteSheet(); else closeSheet(); }
+
+/* ---------------- instructions ---------------- */
+function instr(step, isLast){
+  const t=L(), m=step.maneuver, mod=m.modifier||"straight", road=step.ref||step.name||"";
+  let s, withRoad=true;
+  switch(m.type){
+    case "depart": s=t.depart; break;
+    case "arrive": s=isLast?t.arrive:t.stop; withRoad=false; break;
+    case "roundabout": case "rotary": s=m.exit?t.rb(m.exit):t.mod[mod]; break;
+    case "exit roundabout": case "exit rotary": s=t.rbx; break;
+    case "off ramp": s=t.exit+(mod.includes("left")?t.exitL:mod.includes("right")?t.exitR:""); break;
+    case "on ramp": s=t.ramp; break;
+    case "merge": s=t.merge; break;
+    case "fork": s=t.keep[mod]||t.keep.straight; break;
+    case "new name": case "continue": s=mod==="straight"?t.mod.straight:t.mod[mod]; break;
+    default: s=t.mod[mod]||t.mod.straight;
+  }
+  return {text:s, road:withRoad?road:"", full:s+(withRoad&&road?t.onto+road:"")};
+}
+function arrowSVG(step){
+  const m=step.maneuver, W='stroke="#fff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none"';
+  if(m.type==="arrive") return '<svg viewBox="0 0 48 48"><path d="M24 44s-13-13.5-13-23a13 13 0 0 1 26 0c0 9.5-13 23-13 23z" fill="#e0412f"/><circle cx="24" cy="21" r="5" fill="#fff"/></svg>';
+  if(m.type==="roundabout"||m.type==="rotary") return '<svg viewBox="0 0 48 48"><circle cx="24" cy="29" r="9" '+W+'/><path d="M24 20V5M17 11l7-7 7 7" '+W+'/><text x="24" y="33.5" text-anchor="middle" font-size="12" font-weight="700" fill="#fff" font-family="Saira Semi Condensed,sans-serif">'+(m.exit||"")+'</text></svg>';
+  if(m.modifier==="uturn") return '<svg viewBox="0 0 48 48"><path d="M30 42V20a8 8 0 0 0-16 0v4M8 18l6 7 6-7" '+W+'/></svg>';
+  const rot={straight:0,"slight right":40,right:90,"sharp right":135,"sharp left":-135,left:-90,"slight left":-40}[m.modifier||"straight"]||0;
+  return '<svg viewBox="0 0 48 48"><g transform="rotate('+rot+' 24 30)"><path d="M24 44V12M14 21l10-10 10 10" '+W+'/></g></svg>';
+}
+
+/* ---------------- voice ---------------- */
+function say(text){
+  if(!S.voice || !("speechSynthesis" in window)) return;
+  try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(text), want=L().voices, vs=speechSynthesis.getVoices();
+    const v=want.map(w=>vs.find(x=>x.lang.replace("_","-").startsWith(w))).find(Boolean);
+    if(v){ u.voice=v; u.lang=v.lang; } else u.lang=want[0]; u.rate=1.02; speechSynthesis.speak(u); }catch(e){}
+}
+if("speechSynthesis" in window) speechSynthesis.onvoiceschanged=()=>{};
+
+/* ---------------- navigation ---------------- */
+async function startNav(sim){
+  S.R=S.routes[S.sel]; S.nav=true; S.lastIdx=0; S.spoken={}; S.alerted={}; S.passed={}; S.follow=true;
+  try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); actx.resume?.(); }catch(e){}
+  closeSheet(); clearFuel(); $("top").hidden=true; $("navtop").hidden=false; $("tripbar").hidden=false; $("speedo").hidden=false;
+  $("locBtn").classList.add("on"); setSheetVar(tripH());
+  drawNavRoute();
+  try{ S.wake=await navigator.wakeLock?.request("screen"); }catch(e){}
+  say(L().start);
+  if(sim) startSim(); else if(S.pos) onPos(S.pos);
+  else map.jumpTo({center:ll(S.R.pts[0]), zoom:17});
+}
+function endNav(){
+  S.nav=false; stopSim(); try{ S.wake?.release(); }catch(e){} S.wake=null;
+  $("navtop").hidden=true; $("tripbar").hidden=true; $("top").hidden=false; $("speedo").hidden=true;
+  closeRoute(); setSheetVar(0);
+  map.easeTo({pitch:0, bearing:0, padding:{top:0,bottom:0,left:0,right:0}, zoom:15, duration:600});
+  if("speechSynthesis" in window) speechSynthesis.cancel();
+}
+$("endBtn").onclick=endNav;
+document.addEventListener("visibilitychange", async () => { if(S.nav && document.visibilityState==="visible" && !S.wake){ try{ S.wake=await navigator.wakeLock?.request("screen"); }catch(e){} } });
+
+function nearest(R,p,from){
+  const n=R.pts.length; let best={d:1e12,i:0,t:0};
+  const scan=(a,b)=>{ for(let i=a;i<=b;i++){ const r=segProj(p,R.pts[i],R.pts[i+1]); if(r.d<best.d) best={d:r.d,i,t:r.t}; } };
+  scan(Math.max(0,from-3), Math.min(n-2,from+400)); if(best.d>80) scan(0,n-2);
+  best.along=R.cum[best.i]+best.t*(R.cum[best.i+1]-R.cum[best.i]); return best;
+}
+function stepAt(R,i){ let s=0; while(s+1<R.stepStart.length && R.stepStart[s+1]<=i) s++; return s; }
+
+function navTick(p){
+  const R=S.R, t=L(), near=nearest(R,p,S.lastIdx);
+  if(near.d>55 && !S.rerouting && Date.now()-S.lastReroute>10000 && !S.sim) reroute(p);
+  S.lastIdx=near.i;
+  const cur=stepAt(R,near.i), nxt=Math.min(cur+1,R.steps.length-1), step=R.steps[nxt], last=nxt===R.steps.length-1;
+  const toMan=Math.max(0,R.cum[R.stepStart[nxt]]-near.along), remain=Math.max(0,R.cum[R.cum.length-1]-near.along);
+  const ins=instr(step,last);
+  $("navArrow").innerHTML=arrowSVG(step); $("navDist").textContent=fmtDist(toMan); $("navIns").textContent=ins.text; $("navRoad").textContent=ins.road;
+  const after=R.steps[nxt+1];
+  if(after && toMan<500 && step.distance<300 && after.maneuver.type!=="arrive"){ $("navThen").hidden=false; $("navThen").innerHTML=t.then+esc(instr(after,false).text); }
+  else $("navThen").hidden=true;
+  // trip bar — remaining time scaled from the route estimate, plus delays from reports still ahead
+  const aheadPenalty = (R.alerts||[]).filter(a=>!S.passed[a.id]).reduce((s,a)=>s+(HZ[a.type]?.delay||0),0)*60;
+  const leftSec=R.duration*(remain/R.distance)+aheadPenalty;
+  $("etaClock").textContent=clock(new Date(Date.now()+leftSec*1000));
+  $("etaSub").textContent=fmtDur(leftSec)+" · "+fmtDist(remain)+(S.stops.length?" · via "+S.stops[0].name:"");
+  S.lastLeft=leftSec;
+  // voice
+  const kmh=(S.speed||0)*3.6, far=kmh>70?1000:400;
+  if(step.maneuver.type!=="arrive" || !last){
+    if(toMan<=far && toMan>far*0.6 && !S.spoken[nxt+"f"]){ S.spoken[nxt+"f"]=1; say(t.inX(t.dist(toMan))+ins.full); }
+    if(toMan<=(kmh>70?250:70) && !S.spoken[nxt+"n"]){ S.spoken[nxt+"n"]=1; say(ins.full); }
+  }
+  if(S.stops.length && hav(p,S.stops[0])<40){ say(t.stop); toast(t.stop); S.stops.shift(); stopMarkers.shift()?.remove(); }
+  if(remain<30){ say(t.arrive); toast(t.arrive); endNav(); return; }
+  hazardCheck(p);
+}
+async function reroute(p){
+  S.rerouting=true; S.lastReroute=Date.now(); say(L().reroute); toast(L().reroute);
+  try{ S.routes=await fetchRoutes(p,S.stops,S.dest); scoreRoutes(); S.R=S.routes[0]; S.lastIdx=0; S.spoken={}; drawNavRoute(); }
+  catch(e){ toast("Couldn't recalculate yet. Keep driving; it will retry."); }
+  S.rerouting=false;
+}
+async function rerouteWithStops(){ const from=S.pos||S.R.pts[S.lastIdx]; S.lastReroute=0; await reroute(from); stopMarkers.forEach(m=>m.remove()); stopMarkers=S.stops.map(s=>pin("stoppin",s)); if(S.sim) startSim(); }
+
+/* ---------------- test drive (simulation) ---------------- */
+function startSim(){
+  stopSim(); let d=0; const v=19; // ~70 km/h
+  S.sim=setInterval(()=>{
+    const R=S.R, total=R.cum[R.cum.length-1];
+    if(d===0 && S.simFrom){ d=nearest(R,S.simFrom,0).along; S.simFrom=null; }
+    d+=v*0.5; if(d>=total) d=total;
+    let i=0; while(i<R.cum.length-2 && R.cum[i+1]<d) i++;
+    const seg=R.cum[i+1]-R.cum[i]||1, f=(d-R.cum[i])/seg, a=R.pts[i], b=R.pts[i+1];
+    S.heading=bearing(a,b); onPos({lat:a.lat+(b.lat-a.lat)*f, lng:a.lng+(b.lng-a.lng)*f}, S.heading, v);
+    if(d>=total) stopSim();
+  },500);
+}
+function stopSim(){ if(S.sim){ clearInterval(S.sim); S.sim=null; } }
+
+/* ---------------- community reports ---------------- */
+// Local by default. With a Firebase Realtime Database URL in Settings, reports are shared with every driver using the same URL.
+const Sync = {
+  base(){ const u=(S.syncUrl||"").trim().replace(/\/+$/,""); return /^https:\/\/[a-z0-9.-]+\.(firebaseio\.com|firebasedatabase\.app)$/i.test(u)?u:""; },
+  async pull(){ const b=this.base(); if(!b) return null; const j=await (await fetch(b+"/reports.json")).json(); return j||{}; },
+  async put(r){ const b=this.base(); if(!b) return; await fetch(b+"/reports/"+encodeURIComponent(r.id)+".json",{method:"PUT",body:JSON.stringify({type:r.type,lat:r.lat,lng:r.lng,t:r.t,up:r.up||0,down:r.down||0})}); },
+  async del(id){ const b=this.base(); if(!b) return; await fetch(b+"/reports/"+encodeURIComponent(id)+".json",{method:"DELETE"}); },
+};
+function valid(r){ return r && HZ[r.type] && isFinite(r.lat) && isFinite(r.lng) && isFinite(r.t) && Date.now()-r.t < HZ[r.type].ttl*60000; }
+async function loadReports(){
+  let list = store.get("reports",[]).filter(valid);
+  try{ const remote=await Sync.pull();
+    if(remote){ const rem=Object.entries(remote).map(([id,v])=>({id:String(id).slice(0,40), type:String(v?.type), lat:+v?.lat, lng:+v?.lng, t:+v?.t, up:+v?.up||0, down:+v?.down||0})).filter(valid);
+      const ids=new Set(rem.map(r=>r.id)); list=[...rem, ...list.filter(r=>!ids.has(r.id)&&!r.synced)]; }
+  }catch(e){ /* offline: keep local */ }
+  S.reports=list; store.set("reports",list); drawReports();
+}
+function saveReports(){ store.set("reports",S.reports); drawReports(); }
+function drawReports(){
+  hzMarkers.forEach(m=>m.remove()); hzMarkers=[];
+  S.reports.forEach(r => {
+    const el=document.createElement("div"); el.className="hzpin"; el.textContent=HZ[r.type].e;
+    const mk=new maplibregl.Marker({element:el}).setLngLat(ll(r)).addTo(map);
+    el.addEventListener("click", ev => { ev.stopPropagation(); reportPopup(r, mk); });
+    hzMarkers.push(mk);
+  });
+}
+function ago(t){ const m=Math.round((Date.now()-t)/60000); return m<1?"just now":m<60?m+" min ago":Math.round(m/60)+" h ago"; }
+function reportPopup(r, mk){
+  const d=document.createElement("div"); d.className="pop";
+  d.innerHTML='<b>'+HZ[r.type].e+' '+esc(hzName(r.type))+'</b><div class="m">Reported '+ago(r.t)+(r.up?' · confirmed by '+r.up:'')+'</div><div class="row"><button class="btn sm" data-a="up">👍 Still there</button><button class="btn sm" data-a="down">👎 Gone</button></div>';
+  const pop=new maplibregl.Popup({offset:22, closeButton:false}).setLngLat(ll(r)).setDOMContent(d).addTo(map);
+  d.querySelector('[data-a="up"]').onclick=()=>{ vote(r,true); pop.remove(); };
+  d.querySelector('[data-a="down"]').onclick=()=>{ vote(r,false); pop.remove(); };
+}
+function vote(r, up){
+  if(up){ r.up=(r.up||0)+1; r.t=Date.now(); Sync.put(r).catch(()=>{}); toast("Thanks — report kept on the map"); }
+  else { r.down=(r.down||0)+1;
+    if(!Sync.base() || r.down>=2){ S.reports=S.reports.filter(x=>x.id!==r.id); Sync.del(r.id).catch(()=>{}); toast("Report removed"); }
+    else { Sync.put(r).catch(()=>{}); toast("Thanks — it goes after one more 'Gone'"); } }
+  saveReports();
+}
+function openReport(){
+  const t=S.lang;
+  let h='<div class="grab"></div><div class="hd"><h2>'+(t==="ms"?"Lapor":t==="zh"?"报告路况":"Report")+'</h2><p>'+(S.pos?"Placed at your current position":"No GPS fix yet, so it goes at the map centre")+(Sync.base()?" · shared with other drivers":" · saved on this phone")+'</p></div><div class="hzgrid">';
+  Object.entries(HZ).forEach(([k,v])=> h+='<button class="hz" data-k="'+k+'"><i>'+v.e+'</i>'+esc(v[t]||v.en)+'</button>');
+  h+='</div><div class="row"><button class="btn" id="cancelRep">Cancel</button></div>';
+  openSheet(h);
+  document.querySelectorAll(".hz").forEach(b => b.onclick=()=>{
+    const p=S.pos||{lat:map.getCenter().lat, lng:map.getCenter().lng};
+    const r={id:Date.now().toString(36)+Math.random().toString(36).slice(2,6), type:b.dataset.k, lat:p.lat, lng:p.lng, t:Date.now(), up:0, down:0};
+    S.reports.push(r); S.myReports++; store.set("myReports",S.myReports);
+    if(Sync.base()){ r.synced=true; Sync.put(r).catch(()=>toast("Saved on this phone; sharing failed.")); }
+    saveReports(); afterSheet(); navigator.vibrate?.(40);
+    toast(hzName(b.dataset.k)+" reported. Terima kasih!");
+  });
+  $("cancelRep").onclick=afterSheet;
+}
+function hazardCheck(p){
+  let shown=null;
+  S.reports.forEach(r => { const d=hav(p,r), ahead=Math.abs(((bearing(p,r)-S.heading+540)%360)-180)<60;
+    if(d<700 && ahead && d>25){ if(!shown||d<shown.d) shown={r,d};
+      if(!S.alerted[r.id]){ S.alerted[r.id]=1; if(r.type==="camera"||r.type==="police") beep(1); say(L().ahead(hzName(r.type))); } }
+    else if(S.alerted[r.id] && !S.passed[r.id] && d<=40){ S.passed[r.id]=1; askStillThere(r); }
+  });
+  const a=$("alert"); if(S.asking) return;
+  if(shown){ a.hidden=false; a.innerHTML='<span class="ae">'+HZ[shown.r.type].e+'</span><span class="at">'+esc(hzName(shown.r.type))+' · '+fmtDist(shown.d)+'</span>'; }
+  else a.hidden=true;
+}
+// Waze's "Still there?" prompt as you pass a report.
+function askStillThere(r){
+  const a=$("alert"); S.asking=true; a.hidden=false;
+  a.innerHTML='<span class="ae">'+HZ[r.type].e+'</span><span class="at">'+esc(hzName(r.type))+' — '+esc(L().stillThere)+'</span><button data-a="up">👍</button><button data-a="down">👎</button>';
+  const done=()=>{ S.asking=false; a.hidden=true; clearTimeout(tm); };
+  a.querySelector('[data-a="up"]').onclick=()=>{ vote(r,true); done(); };
+  a.querySelector('[data-a="down"]').onclick=()=>{ vote(r,false); done(); };
+  const tm=setTimeout(done, 9000);
+}
+
+/* ---------------- petrol stations ---------------- */
+function clearFuel(){ S.fuelMarkers.forEach(m=>m.remove()); S.fuelMarkers=[]; }
+async function openFuel(){
+  const c=S.pos||{lat:map.getCenter().lat, lng:map.getCenter().lng};
+  openSheet('<div class="grab"></div><div class="hd"><h2>Petrol nearby</h2><p>Within 8 km'+(S.nav?' · tap one to add it as a stop':'')+'</p></div><p class="hint">Looking for stations…</p>');
+  const q='[out:json][timeout:12];(node(around:8000,'+c.lat+','+c.lng+')[amenity=fuel];way(around:8000,'+c.lat+','+c.lng+')[amenity=fuel];);out center 40;';
+  try{
+    const j=await (await fetch(CFG.overpass,{method:"POST", body:"data="+encodeURIComponent(q)})).json();
+    let list=(j.elements||[]).map(e=>{ const lat=e.lat??e.center?.lat, lng=e.lon??e.center?.lon, tg=e.tags||{};
+      return {name:tg.brand||tg.name||"Petrol station", sub:[tg.name&&tg.brand&&tg.name!==tg.brand?tg.name:"", tg["addr:street"]||"", tg.opening_hours==="24/7"?"Open 24 hours":""].filter(Boolean).join(" · "), lat, lng}; })
+      .filter(f=>isFinite(f.lat));
+    // while driving, prefer stations ahead of you
+    list.forEach(f=>{ f.d=hav(c,f); f.ahead = !S.nav || Math.abs(((bearing(c,f)-S.heading+540)%360)-180)<75; });
+    list.sort((a,b)=>(b.ahead-a.ahead)||(a.d-b.d)); list=list.slice(0,12);
+    if(!list.length){ openSheet('<div class="grab"></div><div class="hd"><h2>Petrol nearby</h2></div><p class="hint">No stations found within 8 km.</p><div class="row"><button class="btn" id="cl">Close</button></div>'); $("cl").onclick=()=>{clearFuel();afterSheet();}; return; }
+    clearFuel();
+    list.forEach(f=>{ const m=pin("fuelpin",f,"⛽"); m.getElement().onclick=ev=>{ev.stopPropagation(); chooseFuel(f);}; S.fuelMarkers.push(m); });
+    let h='<div class="grab"></div><div class="hd"><h2>Petrol nearby</h2><p>'+list.length+(list.length===1?' station':' stations')+(S.nav?' · ahead of you first':'')+'</p></div><div class="list">';
+    list.forEach((f,i)=> h+='<button class="li" data-f="'+i+'"><span style="font-size:22px">⛽</span><span class="tx"><b>'+esc(f.name)+'</b><span>'+esc(f.sub||(f.ahead&&S.nav?"Ahead":""))+'</span></span><span class="dd">'+fmtDist(f.d)+'</span></button>');
+    h+='</div><div class="row"><button class="btn" id="cl">Close</button></div>';
+    openSheet(h);
+    document.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>chooseFuel(list[+b.dataset.f]));
+    $("cl").onclick=()=>{ clearFuel(); afterSheet(); };
+  }catch(e){ openSheet('<div class="grab"></div><div class="hd"><h2>Petrol nearby</h2></div><p class="hint">Station search isn\'t reachable right now. Try again in a moment.</p><div class="row"><button class="btn" id="cl">Close</button></div>'); $("cl").onclick=afterSheet; }
+}
+function chooseFuel(f){ clearFuel(); if(S.nav||(S.dest&&S.searchMode==="stop")){ closeSheet(); addStop(f); } else setDest(f); }
+
+/* ---------------- share ETA ---------------- */
+async function shareTrip(live){
+  if(!S.dest) return;
+  const left = live && S.lastLeft ? S.lastLeft : (S.routes[S.sel]?.eff||0);
+  const text = "On my way to "+S.dest.name+". ETA "+clock(new Date(Date.now()+left*1000))+" ("+fmtDur(left)+" away).";
+  const url = "https://www.google.com/maps/search/?api=1&query="+S.dest.lat.toFixed(6)+","+S.dest.lng.toFixed(6);
+  try{ if(navigator.share){ await navigator.share({title:"My ETA", text, url}); return; } }catch(e){ if(e.name==="AbortError") return; }
+  try{ await navigator.clipboard.writeText(text+" "+url); toast("ETA copied. Paste it into WhatsApp or any chat."); }catch(e){ toast(text); }
+}
+$("navShare").onclick=()=>shareTrip(true);
+$("navFuel").onclick=openFuel;
+
+/* ---------------- settings ---------------- */
+function openSettings(){
+  const seg=(id,opts,val)=>'<div class="seg" id="'+id+'">'+opts.map(([v,l])=>'<button data-v="'+v+'" class="'+(v===val?"on":"")+'">'+l+'</button>').join("")+'</div>';
+  const sw=(id,on)=>'<button class="sw'+(on?" on":"")+'" id="'+id+'" role="switch" aria-checked="'+on+'"></button>';
+  openSheet('<div class="grab"></div><div class="hd"><h2>Settings</h2><p>Saved on this phone. You have made '+S.myReports+' report'+(S.myReports===1?"":"s")+'.</p></div><div class="list">'+
+    '<div class="li"><span class="tx"><b>Voice language</b><span>Spoken directions and report names</span></span>'+seg("setLang",[["en","EN"],["ms","BM"],["zh","中文"]],S.lang)+'</div>'+
+    '<div class="li"><span class="tx"><b>Voice guidance</b><span>Turn-by-turn and hazard warnings</span></span>'+sw("setVoice",S.voice)+'</div>'+
+    '<div class="li"><span class="tx"><b>Avoid tolls</b><span>Picks a toll-free route when one is found</span></span>'+sw("setToll",S.avoidTolls)+'</div>'+
+    '<div class="li"><span class="tx"><b>Heading-up 3D view</b><span>Map turns with you while driving</span></span>'+sw("setHead",S.headUp)+'</div>'+
+    '<div class="li"><span class="tx"><b>Map colours</b><span>Auto switches to night at 7 pm</span></span>'+seg("setTheme",[["auto","Auto"],["day","Day"],["night","Night"]],S.theme)+'</div>'+
+    '<div class="li" style="display:block"><b>Shared reports</b><span style="display:block">Paste a Firebase Realtime Database URL so everyone using it sees the same reports. Leave empty to keep reports on this phone.</span>'+
+      '<input class="field" id="setSync" type="url" inputmode="url" placeholder="https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app" value="'+esc(S.syncUrl)+'"></div>'+
+    '<div class="li"><span class="tx"><b>Clear history</b><span>Recent places, Home and Work</span></span><button class="btn sm warn" id="setClear">Clear</button></div>'+
+    '</div><div class="row"><button class="btn" id="setDone">Done</button></div>'+
+    '<p class="hint">Map © OpenStreetMap contributors · OpenFreeMap · Routing OSRM · Search Photon · Limits & stations Overpass</p>');
+  const segBind=(id,fn)=>$(id).querySelectorAll("button").forEach(b=>b.onclick=()=>{ $(id).querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b)); fn(b.dataset.v); });
+  const swBind=(id,fn)=>$(id).onclick=()=>{ const on=!$(id).classList.contains("on"); $(id).classList.toggle("on",on); $(id).setAttribute("aria-checked",on); fn(on); };
+  segBind("setLang",v=>{ S.lang=v; store.set("lang",v); drawReports(); say(v==="ms"?"Bahasa Melayu":v==="zh"?"中文语音":"English voice"); });
+  swBind("setVoice",on=>{ S.voice=on; store.set("voice",on); paintVoice(); });
+  swBind("setToll",on=>{ S.avoidTolls=on; store.set("avoidTolls",on); });
+  swBind("setHead",on=>{ S.headUp=on; store.set("headUp",on); });
+  segBind("setTheme",v=>{ S.theme=v; store.set("theme",v); setMapStyle(); });
+  $("setSync").onchange=e=>{ S.syncUrl=e.target.value.trim(); store.set("syncUrl",S.syncUrl);
+    if(S.syncUrl && !Sync.base()) toast("That doesn't look like a Firebase database URL."); else { toast(S.syncUrl?"Shared reports on":"Reports stay on this phone"); loadReports(); } };
+  $("setClear").onclick=()=>{ S.recent=[]; S.saved={}; store.set("recent",[]); store.set("saved",{}); renderChips(); toast("History cleared"); };
+  $("setDone").onclick=()=>{ $("setSync").dispatchEvent(new Event("change")); afterSheet(); };
+}
+$("setBtn").onclick=openSettings;
+
+/* ---------------- buttons ---------------- */
+$("reportBtn").onclick=openReport;
+$("locBtn").onclick=()=>{ S.follow=true; $("locBtn").classList.add("on");
+  if(!S.pos){ toast("Waiting for GPS signal…"); return; }
+  if(S.nav) followCam(S.pos,(S.speed||0)*3.6); else map.easeTo({center:ll(S.pos), zoom:Math.max(map.getZoom(),15), duration:600}); };
+$("compass").onclick=()=>{ if(S.nav){ S.headUp=!S.headUp; store.set("headUp",S.headUp); toast(S.headUp?"Heading-up 3D":"North-up 2D"); if(S.pos&&S.follow) followCam(S.pos,(S.speed||0)*3.6); }
+  else map.easeTo({bearing:0, pitch:0, duration:500}); };
+function paintVoice(){ $("voiceBtn").classList.toggle("on",S.voice); $("voiceWaves").style.opacity=S.voice?1:.15; }
+$("voiceBtn").onclick=()=>{ S.voice=!S.voice; store.set("voice",S.voice); paintVoice(); toast(S.voice?"Voice on":"Voice muted"); if(S.voice) say(S.lang==="ms"?"Suara dihidupkan":S.lang==="zh"?"语音已开启":"Voice on"); };
+
+/* ---------------- boot ---------------- */
+paintVoice(); renderChips(); loadReports(); startGPS();
+setInterval(loadReports, 30000);
+setInterval(()=>{ if(S.theme==="auto" && (document.documentElement.dataset.theme==="night")!==isNight()) setMapStyle(); }, 60000);
+if("serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
+if(location.protocol==="file:") setTimeout(()=>toast("Open this over https (e.g. GitHub Pages) so your phone allows GPS."),1500);
+</script>
+</body>
+</html>
