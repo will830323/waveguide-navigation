@@ -160,6 +160,20 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--route);outline-
 .man .dist{font:700 36px/1 var(--f-display);font-variant-numeric:tabular-nums}
 .man .ins{font:600 18px/1.15 var(--f-display);text-wrap:balance}
 .man .road{font-size:14px;opacity:.8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.man{cursor:pointer}
+.manlist{flex:none;align-self:flex-start;font-size:18px;opacity:.7}
+.dirs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.dr{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 4px;border-top:1px solid var(--line)}
+.dirs li:first-child .dr{border-top:0}
+.dr.now{background:color-mix(in srgb,var(--route) 9%,var(--surface));border-radius:12px;padding-inline:8px}
+.da{flex:none;width:42px;height:42px;border-radius:12px;background:var(--navy);display:grid;place-items:center}
+.da svg{width:30px;height:30px}
+.dt{flex:1;min-width:0;display:flex;flex-direction:column}
+.dt b{font:700 16px/1.2 var(--f-display)}
+.dt .rd{font-weight:700;font-size:13px;color:var(--fg);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dt .mt2{font-size:12px;color:var(--muted)}
+.dd2{flex:none;text-align:right;font:700 15px var(--f-display);font-variant-numeric:tabular-nums;display:flex;flex-direction:column}
+.dd2 small{font:400 11px var(--f-body);color:var(--muted)}
 .then{display:inline-flex;gap:6px;align-items:center;background:var(--navy-2);color:#fff;font:600 14px var(--f-display);padding:6px 12px;border-radius:10px;box-shadow:var(--shadow)}
 #alert{align-self:stretch;background:var(--signal);color:var(--signal-ink);border-radius:16px;padding:10px 12px;font:700 16px var(--f-display);box-shadow:var(--shadow);display:flex;gap:10px;align-items:center}
 #alert .ae{font-size:26px}
@@ -226,13 +240,14 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--route);outline-
 
 <!-- navigation -->
 <div id="navtop" hidden>
-  <div class="man">
+  <div class="man" id="manPanel" role="button" tabindex="0" aria-label="Show all directions">
     <div class="arrow" id="navArrow"></div>
     <div style="min-width:0;flex:1">
       <div class="dist" id="navDist">—</div>
       <div class="ins" id="navIns">Starting…</div>
       <div class="road" id="navRoad"></div>
     </div>
+    <span class="manlist" aria-hidden="true">☰</span>
   </div>
   <div class="then" id="navThen" hidden></div>
   <div id="alert" hidden></div>
@@ -333,7 +348,7 @@ const ll = p => [p.lng, p.lat];
 const T = {
   en:{ mod:{left:"Turn left",right:"Turn right","slight left":"Bear left","slight right":"Bear right","sharp left":"Turn sharp left","sharp right":"Turn sharp right",uturn:"Make a U-turn",straight:"Continue straight"},
        keep:{left:"Keep left",right:"Keep right","slight left":"Keep left","slight right":"Keep right",straight:"Keep straight"},
-       depart:"Head out", arrive:"You have arrived", stop:"You've reached your stop", onto:" onto ", exit:"Take the exit", exitL:" on the left", exitR:" on the right",
+       depart:"Head out", arrive:"You have arrived", stop:"You've reached your stop", onto:" onto ", exit:"Take the exit", exitN:n=>"Take exit "+n, towards:" towards ", exitL:" on the left", exitR:" on the right",
        ramp:"Take the ramp", merge:"Merge", rb:n=>"At the roundabout, take exit "+n, rbx:"Exit the roundabout",
        inX:d=>"In "+d+", ", reroute:"Recalculating route", start:"Starting navigation", then:"Then: ",
        ahead:n=>n+" reported ahead", stillThere:"Still there?", speeding:"Slow down",
@@ -341,7 +356,7 @@ const T = {
        voices:["en-MY","en-GB","en-SG","en-US","en"], label:"EN" },
   ms:{ mod:{left:"Belok kiri",right:"Belok kanan","slight left":"Ikut kiri","slight right":"Ikut kanan","sharp left":"Belok tajam ke kiri","sharp right":"Belok tajam ke kanan",uturn:"Buat pusingan U",straight:"Terus"},
        keep:{left:"Ikut kiri",right:"Ikut kanan","slight left":"Ikut kiri","slight right":"Ikut kanan",straight:"Terus"},
-       depart:"Mulakan perjalanan", arrive:"Anda telah tiba", stop:"Anda telah tiba di hentian", onto:" ke ", exit:"Ambil susur keluar", exitL:" di kiri", exitR:" di kanan",
+       depart:"Mulakan perjalanan", arrive:"Anda telah tiba", stop:"Anda telah tiba di hentian", onto:" ke ", exit:"Ambil susur keluar", exitN:n=>"Ambil susur keluar "+n, towards:" ke arah ", exitL:" di kiri", exitR:" di kanan",
        ramp:"Masuk susur", merge:"Bergabung", rb:n=>"Di bulatan, ambil susur keluar ke-"+n, rbx:"Keluar dari bulatan",
        inX:d=>"Dalam "+d+", ", reroute:"Mengira semula laluan", start:"Navigasi dimulakan", then:"Kemudian: ",
        ahead:n=>n+" dilaporkan di hadapan", stillThere:"Masih ada?", speeding:"Perlahankan kenderaan",
@@ -349,7 +364,7 @@ const T = {
        voices:["ms-MY","ms","id-ID"], label:"BM" },
   zh:{ mod:{left:"左转",right:"右转","slight left":"稍向左行驶","slight right":"稍向右行驶","sharp left":"向左急转","sharp right":"向右急转",uturn:"掉头",straight:"直行"},
        keep:{left:"靠左",right:"靠右","slight left":"靠左","slight right":"靠右",straight:"直行"},
-       depart:"出发", arrive:"您已到达目的地", stop:"已到达途经点", onto:"，进入", exit:"驶出匝道", exitL:"（左侧）", exitR:"（右侧）",
+       depart:"出发", arrive:"您已到达目的地", stop:"已到达途经点", onto:"，进入", exit:"驶出匝道", exitN:n=>"从"+n+"号出口驶出", towards:"，往", exitL:"（左侧）", exitR:"（右侧）",
        ramp:"驶入匝道", merge:"并道", rb:n=>"在环岛从第"+n+"个出口驶出", rbx:"驶出环岛",
        inX:d=>d+"后，", reroute:"正在重新规划路线", start:"开始导航", then:"然后：",
        ahead:n=>"前方有"+n, stillThere:"还在吗？", speeding:"您已超速",
@@ -639,7 +654,7 @@ function renderRouteSheet(){
   });
   h+='</div>'+
      '<div class="row"><button class="btn go" id="goBtn">GO</button><button class="btn" id="simBtn">Test drive</button></div>'+
-     '<div class="row"><button class="btn sm" id="stopBtn">+ Add stop</button><button class="btn sm" id="shareBtn">Share</button><button class="btn sm" id="homeBtn">Set as Home</button><button class="btn sm" id="workBtn">Set as Work</button><button class="btn sm" id="closeBtn">Close</button></div>'+
+     '<div class="row"><button class="btn sm" id="dirBtn">☰ Directions</button><button class="btn sm" id="stopBtn">+ Add stop</button><button class="btn sm" id="shareBtn">Share</button><button class="btn sm" id="homeBtn">Set as Home</button><button class="btn sm" id="workBtn">Set as Work</button><button class="btn sm" id="closeBtn">Close</button></div>'+
      '<p class="hint">Times are typical free-flow estimates plus delays from reports. Tap a grey line on the map to pick it.</p>';
   openSheet(h);
   document.querySelectorAll(".rc").forEach(b => b.onclick=()=>{ S.sel=+b.dataset.i; drawRoutes(); renderRouteSheet(); });
@@ -647,6 +662,7 @@ function renderRouteSheet(){
   $("goBtn").onclick=()=>startNav(false); $("simBtn").onclick=()=>startNav(true);
   $("stopBtn").onclick=()=>{ S.searchMode="stop"; $("q").value=""; $("q").placeholder="Add a stop (or tap Petrol nearby)"; $("q").focus(); showSuggestions(); };
   $("shareBtn").onclick=()=>shareTrip(false);
+  $("dirBtn").onclick=()=>directionsSheet(S.routes[S.sel], false);
   $("homeBtn").onclick=()=>savePlace("home"); $("workBtn").onclick=()=>savePlace("work"); $("closeBtn").onclick=closeRoute;
 }
 function addStop(place){ S.stops=[place]; if(S.nav) rerouteWithStops(); else setDest(S.dest,true); toast("Stop added: "+place.name); }
@@ -663,23 +679,72 @@ function setSheetVar(px){ document.documentElement.style.setProperty("--sheet-h"
   const tall = px > innerHeight - 420; $("fabR").style.visibility = tall?"hidden":""; $("speedo").style.visibility = tall?"hidden":""; }
 function afterSheet(){ if(S.nav) closeSheet(); else if(S.routes.length) renderRouteSheet(); else closeSheet(); }
 
+/* ---------------- directions list (every junction, in order) ---------------- */
+function roadLabel(st){ const ref=(st.ref||"").replace(/;/g," / "), nm=st.name||""; return ref&&nm&&!nm.includes(ref) ? ref+" · "+nm : (nm||ref); }
+function buildDirections(R, from){
+  const rows=[]; let prevAt = null;
+  for(let i=from||0;i<R.steps.length;i++){
+    const st=R.steps[i], m=st.maneuver, at=R.cum[R.stepStart[i]], last=i===R.steps.length-1;
+    // fold "continue straight on the same road" into the previous row
+    const prev=rows[rows.length-1];
+    if(prev && (m.type==="new name"||m.type==="continue") && (m.modifier||"straight")==="straight" && roadLabel(st)===prev.road) continue;
+    if(m.type==="depart" && i>0) continue; // start of the next leg after a stop
+    const ins=instr(st,last), toll=(st.intersections||[]).some(x=>(x.classes||[]).includes("toll"));
+    rows.push({i, st, ins, at, road:roadLabel(st), toll, leg: prevAt==null ? null : at-prevAt, last});
+    prevAt=at;
+  }
+  return rows;
+}
+function directionsSheet(R, live){
+  if(!R) return;
+  const from = live ? Math.min(stepAt(R,S.lastIdx)+1, R.steps.length-1) : 0;
+  const rows = buildDirections(R, from);
+  const here = live ? R.cum[R.stepStart[from]] - (nearest(R, S.pos||R.pts[0], S.lastIdx).along) : 0;
+  const turns = rows.filter(r=>!["depart","arrive"].includes(r.st.maneuver.type)).length;
+  let h='<div class="grab"></div><div class="hd"><h2>Directions</h2><p>'+turns+' turns and junctions · '+fmtDist(live?R.cum[R.cum.length-1]-R.cum[R.stepStart[from]]+here:R.distance)+(S.dest?' to '+esc(S.dest.name):'')+'</p></div><ol class="dirs">';
+  rows.forEach((r,k) => {
+    const dist = live && k===0 ? Math.max(0,here) : r.leg;
+    const meta=[r.ins.exitNo&&r.st.maneuver.type!=="off ramp"?"Exit "+esc(r.ins.exitNo):"", r.ins.towards?"towards "+esc(r.ins.towards):"", r.toll?"Toll road":""].filter(Boolean).join(" · ");
+    h+='<li><button class="dr'+(live&&k===0?' now':'')+'" data-at="'+r.i+'">'+
+       '<span class="da">'+arrowSVG(r.st)+'</span>'+
+       '<span class="dt"><b>'+esc(r.ins.text)+'</b>'+(r.road&&!r.last?'<span class="rd">'+esc(r.road)+'</span>':'')+(meta?'<span class="mt2">'+meta+'</span>':'')+'</span>'+
+       '<span class="dd2">'+(dist==null?'Start':fmtDist(dist))+'<small>'+(r.at>0&&!live?fmtDist(r.at):'')+'</small></span></button></li>';
+  });
+  h+='</ol><div class="row"><button class="btn" id="dirBack">'+(live?'Back to driving':'Back to routes')+'</button><button class="btn" id="dirShare">Share list</button></div>'+
+     '<p class="hint">'+(live?'Distance to each step from the one before it, starting from where you are now.':'Big number: distance from the previous step. Small number: distance from the start.')+' Tap a step to see it on the map.</p>';
+  openSheet(h);
+  document.querySelectorAll(".dr").forEach(b => b.onclick=()=>{
+    const st=R.steps[+b.dataset.at], loc=st.maneuver.location;
+    if(S.nav){ S.follow=false; $("locBtn").classList.remove("on"); }
+    map.easeTo({center:loc, zoom:17, bearing:st.maneuver.bearing_before||0, pitch:45, padding:{top:120,bottom:sheetH()+20,left:0,right:0}, duration:700});
+  });
+  $("dirBack").onclick=()=>{ if(live){ S.follow=true; $("locBtn").classList.add("on"); closeSheet(); if(S.pos) followCam(S.pos,(S.speed||0)*3.6); } else { renderRouteSheet(); fitRoute(R); } };
+  $("dirShare").onclick=async()=>{
+    const text=(S.dest?"Directions to "+S.dest.name+"\n":"")+rows.map((r,k)=>(k+1)+". "+r.ins.full+(r.leg?" ("+fmtDist(r.leg)+")":"")).join("\n");
+    try{ if(navigator.share){ await navigator.share({title:"Directions", text}); return; } }catch(e){ if(e.name==="AbortError") return; }
+    try{ await navigator.clipboard.writeText(text); toast("Directions copied"); }catch(e){ toast("Couldn't copy on this phone"); }
+  };
+}
+
 /* ---------------- instructions ---------------- */
 function instr(step, isLast){
   const t=L(), m=step.maneuver, mod=m.modifier||"straight", road=step.ref||step.name||"";
+  const exitNo=(step.exits||"").split(";")[0].trim(), towards=(step.destinations||"").replace(/;/g,", ").trim();
   let s, withRoad=true;
   switch(m.type){
     case "depart": s=t.depart; break;
     case "arrive": s=isLast?t.arrive:t.stop; withRoad=false; break;
     case "roundabout": case "rotary": s=m.exit?t.rb(m.exit):t.mod[mod]; break;
     case "exit roundabout": case "exit rotary": s=t.rbx; break;
-    case "off ramp": s=t.exit+(mod.includes("left")?t.exitL:mod.includes("right")?t.exitR:""); break;
+    case "off ramp": s=(exitNo?t.exitN(exitNo):t.exit)+(mod.includes("left")?t.exitL:mod.includes("right")?t.exitR:""); break;
     case "on ramp": s=t.ramp; break;
     case "merge": s=t.merge; break;
     case "fork": s=t.keep[mod]||t.keep.straight; break;
     case "new name": case "continue": s=mod==="straight"?t.mod.straight:t.mod[mod]; break;
     default: s=t.mod[mod]||t.mod.straight;
   }
-  return {text:s, road:withRoad?road:"", full:s+(withRoad&&road?t.onto+road:"")};
+  const sign = towards && /ramp|fork|merge|roundabout|rotary|turn|end of road/.test(m.type) ? t.towards+towards : "";
+  return {text:s, road:withRoad?road:"", towards, exitNo, full:s+(withRoad&&road?t.onto+road:"")+sign};
 }
 function arrowSVG(step){
   const m=step.maneuver, W='stroke="#fff" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none"';
@@ -719,6 +784,7 @@ function endNav(){
   if("speechSynthesis" in window) speechSynthesis.cancel();
 }
 $("endBtn").onclick=endNav;
+$("manPanel").onclick=()=>directionsSheet(S.R,true);
 document.addEventListener("visibilitychange", async () => { if(S.nav && document.visibilityState==="visible" && !S.wake){ try{ S.wake=await navigator.wakeLock?.request("screen"); }catch(e){} } });
 
 function nearest(R,p,from){
@@ -736,7 +802,7 @@ function navTick(p){
   const cur=stepAt(R,near.i), nxt=Math.min(cur+1,R.steps.length-1), step=R.steps[nxt], last=nxt===R.steps.length-1;
   const toMan=Math.max(0,R.cum[R.stepStart[nxt]]-near.along), remain=Math.max(0,R.cum[R.cum.length-1]-near.along);
   const ins=instr(step,last);
-  $("navArrow").innerHTML=arrowSVG(step); $("navDist").textContent=fmtDist(toMan); $("navIns").textContent=ins.text; $("navRoad").textContent=ins.road;
+  $("navArrow").innerHTML=arrowSVG(step); $("navDist").textContent=fmtDist(toMan); $("navIns").textContent=ins.text; $("navRoad").textContent=[ins.road, ins.towards?"→ "+ins.towards:""].filter(Boolean).join("  ");
   const after=R.steps[nxt+1];
   if(after && toMan<500 && step.distance<300 && after.maneuver.type!=="arrive"){ $("navThen").hidden=false; $("navThen").innerHTML=t.then+esc(instr(after,false).text); }
   else $("navThen").hidden=true;
