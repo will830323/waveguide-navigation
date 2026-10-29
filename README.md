@@ -39,6 +39,28 @@ A Waze- and Amap-style navigation app for Malaysia that installs on Android and 
 | **Step-by-step guidance**: walk to the stop → board → stops left → **"Get off at the next stop"** voice and vibration alert | Amap |
 | Driving time shown alongside for comparison | Jalan Nav |
 
+### Tourist / traveller mode
+Switch it on with the **🧳 Tourist mode** chip under the search bar, or in Settings → Mode. Normal mode keeps the everyday experience.
+| Feature | |
+|---|---|
+| **Along your route**: attractions, Wikipedia landmarks (with photo and short description), culture centres, craft and souvenir shops, malls, restaurants, cafés and hotels, each placed along the route with distance and side (left or right) | Shown on the map and in a list |
+| **⭐ Recommended**: places with a Wikipedia entry, and well-known Malaysian food spots matched by name (Yut Kee, Village Park, Line Clear, Hameediyah, Nam Heong and more). Free map data has no star ratings. | Tap one to see it or add it as a stop |
+| **Landmark commentary**: "Coming up on your right: Sultan Abdul Samad Building", with a photo card and a Stop button | While driving or walking |
+| Tourist chips: ⭐ Famous food, 📸 Sights, ☕ Cafés, 🏨 Hotels, 🛍️ Malls | On a 3 km map around you |
+
+### Walking photo guide
+| Feature | |
+|---|---|
+| **📷 Walking guide with photos**: every turn of a walking route with a street photo, a landmark to look for ("Turn right · look for KFC ahead") and the distance between points | Walking routes |
+| The same guide for **public transport walking legs** ("📷 Show the way with photos") and a 📷 Photos button while walking | Public transport |
+| Photos: Wikimedia Commons by default; add a free **Mapillary** token in Settings for street-level photos facing your walking direction | |
+
+### Nearby map (3 km)
+| Feature | |
+|---|---|
+| **🗺️ Show everything on the map**: hotels, cafés, restaurants, EV charging, petrol, parking, ATMs, malls, convenience stores and sights within a 3 km circle, with category filters and ⭐ well-known places | Nearby |
+| Single categories also search 3 km first, then widen to 15 km if nothing is found | |
+
 ### Nearby & social
 | Feature | Like |
 |---|---|
@@ -86,6 +108,7 @@ Test-mode rules expire after 30 days. For long-term use:
 - **Speed cameras and traffic lights** come from OpenStreetMap, so coverage depends on how well your area is mapped. Driver reports fill the gaps.
 - **Voice commands** need Chrome's speech recognition and the microphone permission.
 - **Public transport** timetables come from Transitous. Coverage in Malaysia depends on which operators publish open data, and fares are estimates (adult, cashless).
+- **Tourist places and photos** come from OpenStreetMap, Wikipedia and Wikimedia Commons, so coverage is best in cities and tourist areas. Street photos may be from a nearby spot or an earlier year.
 - **Leave-by reminders** pop up only while the app is open. The Google Calendar event reminds you even when it's closed.
 - **The free public servers** (OSRM, FOSSGIS Valhalla, Photon, Overpass) suit personal use and testing. For many users, self-host them or switch providers: change the URLs in `CFG` and `MODES` at the top of the script.
 - **Satellite imagery** is from Esri, for personal use. Check its terms before a public release.
