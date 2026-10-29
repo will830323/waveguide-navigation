@@ -7,7 +7,7 @@ A Waze- and Amap-style navigation app for Malaysia that installs on Android and 
 ### Driving guidance
 | Feature | Like |
 |---|---|
-| 3D heading-up driving view; Light blue, Landmarks, Satellite and Dark maps | Waze / Amap |
+| North-up map with your position kept in the middle, snapping back 10 s after you pan; optional heading-up 3D; Light blue, Landmarks, Satellite and Dark maps | Waze / Amap |
 | Turn-by-turn voice in English, Bahasa Melayu and 中文, with exit numbers and signposts ("towards Sentul") | Both |
 | **Lane arrows** before junctions: which lanes to be in | Amap |
 | **Speed cameras** from map data plus driver reports, with beep and voice warning | Amap / Waze |
@@ -27,6 +27,17 @@ A Waze- and Amap-style navigation app for Malaysia that installs on Android and 
 | **Live traffic** (TomTom key): coloured roads, traffic-aware ETAs, live incidents | Both |
 | **Planned drives**: "arrive by" time works out your leave-by time (with predicted traffic), and adds a Google Calendar reminder | Waze |
 | Add stops; Home / Work; recent places; long-press to drop a pin | Both |
+
+### Public transport
+| Feature | Like |
+|---|---|
+| **Drive / Public transport** switch under the search bar | Jalan Nav / Amap |
+| Bus, LRT, MRT, monorail, KTM, ETS, ERL and ferry journeys from Transitous timetables | Amap |
+| Each option shows its duration, depart → arrive times, changes, walking minutes, line chips in the line's own colour, and an **estimated RM fare**, with **Best / Fastest / Cheapest / Least walking** tags and **● Live** where real-time data exists | Amap |
+| Tap an option for detailed steps: where to board, which way, stops on the way, where to get off; drawn on the map | Amap |
+| **Leave now / Depart at / Arrive by**, a 🕒 reminder, and sharing the trip as text | Amap |
+| **Step-by-step guidance**: walk to the stop → board → stops left → **"Get off at the next stop"** voice and vibration alert | Amap |
+| Driving time shown alongside for comparison | Jalan Nav |
 
 ### Nearby & social
 | Feature | Like |
@@ -74,6 +85,7 @@ Test-mode rules expire after 30 days. For long-term use:
 - **Lane arrows** need OSM lane data. They show on most highways and many city junctions, but not on motorcycle or avoid-preference routes, which come from Valhalla.
 - **Speed cameras and traffic lights** come from OpenStreetMap, so coverage depends on how well your area is mapped. Driver reports fill the gaps.
 - **Voice commands** need Chrome's speech recognition and the microphone permission.
+- **Public transport** timetables come from Transitous. Coverage in Malaysia depends on which operators publish open data, and fares are estimates (adult, cashless).
 - **Leave-by reminders** pop up only while the app is open. The Google Calendar event reminds you even when it's closed.
 - **The free public servers** (OSRM, FOSSGIS Valhalla, Photon, Overpass) suit personal use and testing. For many users, self-host them or switch providers: change the URLs in `CFG` and `MODES` at the top of the script.
 - **Satellite imagery** is from Esri, for personal use. Check its terms before a public release.

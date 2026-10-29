@@ -151,6 +151,33 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--route);outline-
 
 /* travel modes + route preferences */
 .modes{display:flex;gap:6px;margin:0 0 8px;overflow-x:auto;scrollbar-width:none}
+/* drive / public transport switch */
+.tswitch{display:flex;background:var(--surface);border-radius:999px;box-shadow:0 2px 10px rgba(15,29,51,.16);padding:4px;gap:4px}
+.tswitch button{flex:1;padding:9px 10px;border-radius:999px;font-weight:700;font-size:14px;color:var(--muted)}
+.tswitch button.on{background:var(--route);color:#fff}
+/* transit journeys */
+.trbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px}
+.trbar select,.trbar input{padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface-2);color:var(--fg);font:700 13px var(--f-body)}
+.trbar input{min-width:0;flex:1}
+.trcmp{font-size:13px;color:var(--muted);margin:0 0 10px;padding:8px 12px;border-radius:12px;background:var(--surface-2)}
+.rc.tr .fare{font:700 18px var(--f-display);font-variant-numeric:tabular-nums;align-self:center}
+.legs1{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin-top:6px}
+.leg{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:9px;font:700 13px var(--f-body);background:var(--route);color:#fff;font-variant-numeric:tabular-nums}
+.leg.walk{background:var(--surface-2);color:var(--fg)}
+.legsep{color:var(--muted);font-size:12px}
+.tag.cheap{background:var(--ok);color:#fff}
+.tag.live{background:#e8f6ee;color:#0b7a4b}
+.tsteps{list-style:none;margin:6px 0 4px;padding:0 0 0 6px;display:flex;flex-direction:column}
+.tsteps li{display:flex;gap:12px;position:relative;padding:0 0 14px}
+.tsteps li::before{content:"";position:absolute;left:15px;top:30px;bottom:0;width:4px;border-radius:2px;background:var(--lc,var(--line))}
+.tsteps li:last-child::before{display:none}
+.tsteps li.walk::before{background:repeating-linear-gradient(var(--muted) 0 4px,transparent 4px 9px);width:3px}
+.tsteps i{flex:none;font-style:normal;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--lc,var(--surface-2));color:#fff;font-size:16px;position:relative;z-index:1;border:3px solid var(--surface)}
+.tsteps .tx{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px;padding-top:4px}
+.tsteps b{font-weight:700}
+.tsteps span{font-size:13px;color:var(--muted)}
+.tsteps details{font-size:13px;color:var(--muted)}
+.tsteps summary{cursor:pointer;color:var(--route);font-weight:700}
 .modes::-webkit-scrollbar{display:none}
 .mode{flex:none;display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:var(--surface-2);font-weight:700;font-size:13px}
 .mode.on{background:var(--navy);color:#fff}
@@ -269,6 +296,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--route);outline-
     <button class="ib" id="setBtn" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg></button>
   </div>
   <div id="results" hidden></div>
+  <div class="tswitch" id="tswitch" role="tablist"><button data-t="drive" role="tab">🚗 Drive</button><button data-t="transit" role="tab">🚇 Public transport</button></div>
   <div class="chips" id="chips"></div>
   <div id="friends"></div>
 </div>
@@ -356,7 +384,9 @@ const MODES = {
   moto:{label:"Motorcycle", ico:"🏍️", osrm:null, valhalla:"motorcycle", sim:17},
   bike:{label:"Bicycle",    ico:"🚲", osrm:"https://routing.openstreetmap.de/routed-bike/route/v1/driving/", valhalla:"bicycle", sim:7},
   foot:{label:"Walk",       ico:"🚶", osrm:"https://routing.openstreetmap.de/routed-foot/route/v1/driving/", valhalla:"pedestrian", sim:5},
+  transit:{label:"Transit", ico:"🚇", osrm:null, valhalla:null, sim:11},
 };
+const TRANSIT_API = "https://api.transitous.org/api/";
 const QUICK = [
   {name:"KLCC", sub:"Kuala Lumpur", lat:3.1579, lng:101.7116},
   {name:"KLIA Terminal 1", sub:"Sepang, Selangor", lat:2.7456, lng:101.7072},
@@ -395,7 +425,7 @@ const S = {
   pos:null, heading:0, speed:0, gotFix:false,
   dest:null, stops:[], routes:[], sel:0,
   nav:false, R:null, lastIdx:0, spoken:{}, alerted:{}, passed:{}, lastReroute:0, rerouting:false,
-  follow:true, headUp:store.get("headUp", true),
+  follow:true, headUp:store.get("headUp2", false), dragAt:0, lastCenter:0,
   voice:store.get("voice", true), lang:store.get("lang","en"),
   avoidTolls:store.get("avoidTolls", false), avoidHw:store.get("avoidHw", false), shortest:store.get("shortest", false),
   mode:store.get("mode","car"), ttKey:store.get("ttKey",""), traffic:store.get("traffic", true), incidents:[], view:"",
@@ -533,6 +563,19 @@ function addRouteLayers(){
     layout:{"line-join":"round","line-cap":"round"},paint:{"line-color":cssVar("--casing"),"line-width":W(8,12,20,30)}}, before);
   map.addLayer({id:"sel-line",type:"line",source:"routes",filter:["==",["get","sel"],true],
     layout:{"line-join":"round","line-cap":"round"},paint:{"line-color":cssVar("--route"),"line-width":W(5,8,14,22)}}, before);
+  map.addSource("transit",{type:"geojson",data:{type:"FeatureCollection",features:[]}});
+  map.addLayer({id:"tr-walk",type:"line",source:"transit",filter:["==",["get","k"],"walk"],
+    layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#5b6577","line-width":W(3,4,6,8),"line-dasharray":[0.2,2]}}, before);
+  map.addLayer({id:"tr-casing",type:"line",source:"transit",filter:["==",["get","k"],"ride"],
+    layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#ffffff","line-width":W(8,11,16,24)}}, before);
+  map.addLayer({id:"tr-line",type:"line",source:"transit",filter:["==",["get","k"],"ride"],
+    layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":["get","c"],"line-width":W(5,7,11,17)}}, before);
+  map.addLayer({id:"tr-stop",type:"circle",source:"transit",filter:["==",["get","k"],"stop"],
+    paint:{"circle-radius":["interpolate",["linear"],["zoom"],10,4,16,8],"circle-color":["get","c"],"circle-stroke-color":"#fff","circle-stroke-width":3}});
+  map.addLayer({id:"tr-label",type:"symbol",source:"transit",filter:["==",["get","k"],"stop"],minzoom:12,
+    layout:{"text-field":["get","name"],"text-size":12,"text-offset":[0,1.3],"text-anchor":"top","text-optional":true},
+    paint:{"text-color":"#0f1d33","text-halo-color":"#ffffff","text-halo-width":2}});
+  if(S.transitDraw) setTransitData(S.transitDraw);
   map.on("click","alt-line", e => { if(S.nav) return; const i=e.features?.[0]?.properties?.i; if(i!=null){ S.sel=+i; drawRoutes(); renderRouteSheet(); } });
 }
 function addTrafficLayer(){
@@ -548,7 +591,8 @@ function setTraffic(on){ S.traffic=on; store.set("traffic",on);
 function setRouteData(features){ const src=map.getSource("routes"); if(src) src.setData({type:"FeatureCollection",features}); }
 
 // user moves the map → stop following
-map.on("dragstart", e => { if(e.originalEvent){ S.follow=false; $("locBtn").classList.remove("on"); } });
+map.on("dragstart", e => { if(e.originalEvent){ S.follow=false; S.dragAt=Date.now(); $("locBtn").classList.remove("on"); } });
+map.on("zoomstart", e => { if(e.originalEvent) S.dragAt=Date.now(); });
 map.on("rotate", () => { $("compass").querySelector("svg").style.transform="rotate("+(-map.getBearing())+"deg)"; });
 // long-press / right-click drops a pin
 map.on("contextmenu", e => dropPin(e.lngLat));
@@ -584,19 +628,30 @@ function onPos(p, heading, speed){
   if(!meMarker) meMarker = new maplibregl.Marker({element:meEl, rotationAlignment:"map", pitchAlignment:"map"}).setLngLat(ll(p)).addTo(map);
   else meMarker.setLngLat(ll(p));
   meMarker.setRotation(S.heading);
-  if(!S.gotFix){ S.gotFix=true; if(!S.dest) map.jumpTo({center:ll(p), zoom:15}); }
+  if(!S.gotFix){ S.gotFix=true; if(!S.dest) map.jumpTo({center:ll(p), zoom:15, padding:camPad()}); }
   const kmh = S.speed*3.6;
-  $("speedo").hidden = !(S.nav || kmh>5);
+  $("speedo").hidden = !(S.nav || (kmh>5 && !S.tnav && S.mode!=="transit"));
   $("spd").textContent = Math.round(kmh);
   if(S.hud) paintHud();
   checkSpeed(kmh);
   if(motorised() && (S.nav || kmh>5)) speedLimit(p);
-  if(S.nav){ navTick(p); if(S.follow) followCam(p, kmh); }
+  // after you pan or zoom the map while navigating, snap back to your position 10 seconds later (Waze-style)
+  if((S.nav||S.tnav) && !S.follow && Date.now()-S.dragAt>10000 && $("sheet").classList.contains("closed")){ S.follow=true; $("locBtn").classList.add("on"); }
+  if(S.tnav){ transitTick(p); if(S.follow) followCam(p, kmh); }
+  else if(S.nav){ navTick(p); if(S.follow) followCam(p, kmh); }
+  else if(S.follow && !S.dest && $("sheet").classList.contains("closed") && Date.now()-S.lastCenter>3000){
+    S.lastCenter=Date.now(); map.easeTo({center:ll(p), padding:camPad(), duration:800}); }
+}
+// keep your position in the middle of the part of the map you can see (between the top panel and the bottom bar)
+function camPad(){
+  const top = S.nav||S.tnav ? ($("navtop").offsetHeight||0) : ($("top").offsetHeight||0);
+  const bottom = S.nav||S.tnav ? tripH() : sheetH();
+  return {top:Math.round(top+8), bottom:Math.round(bottom+8), left:0, right:0};
 }
 function followCam(p, kmh){
   const zoom = kmh>90?15.6 : kmh>60?16.2 : kmh>30?16.8 : 17.3;
-  map.easeTo({center:ll(p), zoom, bearing:S.headUp?S.heading:0, pitch:S.headUp?58:0,
-    padding:{top:Math.round(innerHeight*0.38), bottom:90, left:0, right:0}, duration:S.sim?480:950, easing:t=>t});
+  map.easeTo({center:ll(p), zoom, bearing:S.headUp?S.heading:0, pitch:S.headUp?50:0,
+    padding:camPad(), duration:S.sim?480:950, easing:t=>t});
 }
 
 /* ---------------- speed limit + speeding ---------------- */
@@ -638,7 +693,7 @@ $("q").addEventListener("focus", () => { if(!$("q").value.trim()) showSuggestion
 $("q").addEventListener("keydown", e => { if(e.key==="Enter"){ clearTimeout(qT); search(e.target.value.trim()); } if(e.key==="Escape") closeSearch(); });
 $("clearQ").onclick = () => { $("q").value=""; $("clearQ").hidden=true; showSuggestions(); $("q").focus(); };
 document.addEventListener("pointerdown", e => { if(!$("top").contains(e.target)) $("results").hidden=true; });
-function closeSearch(){ $("results").hidden=true; $("q").blur(); if(S.searchMode==="stop"){ S.searchMode="dest"; $("q").placeholder="Where to?"; } }
+function closeSearch(){ $("results").hidden=true; $("q").blur(); if(S.searchMode==="stop"){ S.searchMode="dest"; paintTSwitch(); } }
 
 async function search(v){ if(!v) return; const list=await searchPlaces(v); if(list) showResults(list); }
 async function searchPlaces(v){
@@ -669,13 +724,13 @@ function showSuggestions(){
   if(saved.length){ box.insertAdjacentHTML("beforeend",'<div class="lh">Saved</div>'); saved.forEach(r=>box.appendChild(resultRow(r,r.ico))); }
   const plans=S.plans.filter(p=>p.arrive>Date.now());
   if(plans.length){ box.insertAdjacentHTML("beforeend",'<div class="lh">Planned drives</div>');
-    plans.forEach(p=>box.appendChild(resultRow({...p.dest, sub:"Leave "+dayTime(p.leave)+" · arrive "+dayTime(p.arrive)},"🕒"))); }
+    plans.forEach(p=>box.appendChild(resultRow({...p.dest, sub:"Leave "+dayTime(p.leave)+" · arrive "+dayTime(p.arrive)+(p.mode==="transit"?" · public transport":"")},p.mode==="transit"?"🚇":"🕒"))); }
   if(S.recent.length){ box.insertAdjacentHTML("beforeend",'<div class="lh">Recent</div>'); S.recent.forEach(r=>box.appendChild(resultRow(r,"🕘"))); }
   box.hidden = !box.children.length;
 }
 function pickPlace(r){
   $("results").hidden=true; $("q").blur();
-  if(S.searchMode==="stop"){ S.searchMode="dest"; $("q").placeholder="Where to?"; $("q").value=S.dest?.name||""; addStop(r); return; }
+  if(S.searchMode==="stop"){ S.searchMode="dest"; paintTSwitch(); $("q").value=S.dest?.name||""; addStop(r); return; }
   $("q").value=r.name; setDest(r);
 }
 function remember(p){ if(p.name==="Dropped pin") return;
@@ -795,6 +850,8 @@ async function setDest(place, keepStops){
   remember(place);
   const from = S.pos || {lat:map.getCenter().lat, lng:map.getCenter().lng};
   if(!S.pos) toast("No GPS fix yet, so routing from the map centre.");
+  if(S.mode==="transit"){ S.routes=[]; setRouteData([]); loadTransit(true); return; }
+  setTransitData(null);
   openSheet('<div class="grab"></div><div class="hd"><h2>'+esc(place.name)+'</h2><p>'+esc(place.sub||"")+'</p></div><p class="hint">Finding routes…</p>');
   try{
     S.routes = await fetchRoutes(from, S.stops, place); scoreRoutes(); S.sel=0;
@@ -840,7 +897,7 @@ function renderRouteSheet(){
      '<p class="hint">'+(S.ttKey&&motorised()?'Times include live traffic from TomTom and delays from reports.':'Times are typical free-flow estimates plus delays from reports'+(motorised()?'; add a TomTom key in Settings for live traffic.':'.'))+' 🚥 traffic lights · 📷 speed cameras on the route.</p>';
   openSheet(h); S.view="routes";
   document.querySelectorAll(".rc").forEach(b => b.onclick=()=>{ S.sel=+b.dataset.i; drawRoutes(); renderRouteSheet(); });
-  document.querySelectorAll("[data-mode]").forEach(b => b.onclick=()=>{ S.mode=b.dataset.mode; store.set("mode",S.mode); setDest(S.dest,true); });
+  document.querySelectorAll("[data-mode]").forEach(b => b.onclick=()=>{ setTravelMode(b.dataset.mode); setDest(S.dest,true); });
   document.querySelectorAll("[data-pref]").forEach(b => b.onclick=()=>{ const k=b.dataset.pref;
     if(k==="fast") S.shortest=false; if(k==="short") S.shortest=true; if(k==="toll") S.avoidTolls=!S.avoidTolls; if(k==="hw") S.avoidHw=!S.avoidHw;
     store.set("shortest",S.shortest); store.set("avoidTolls",S.avoidTolls); store.set("avoidHw",S.avoidHw); setDest(S.dest,true); });
@@ -871,7 +928,7 @@ async function routeExtras(r){
 async function loadExtrasAll(){ const list=S.routes.slice(); for(const r of list){ await routeExtras(r); if(S.view==="routes" && !S.nav && S.routes===list) renderRouteSheet(); } }
 function addStop(place){ S.stops=[place]; if(S.nav) rerouteWithStops(); else setDest(S.dest,true); toast("Stop added: "+place.name); }
 function savePlace(k){ S.saved[k]={...S.dest}; store.set("saved",S.saved); renderChips(); toast((k==="home"?"Home":"Work")+" saved"); }
-function closeRoute(){ closeSheet(); setRouteData([]); destMarker?.remove(); stopMarkers.forEach(m=>m.remove()); S.dest=null; S.stops=[]; S.routes=[]; $("q").value=""; $("clearQ").hidden=true; }
+function closeRoute(){ closeSheet(); setRouteData([]); setTransitData(null); S.transit=null; destMarker?.remove(); stopMarkers.forEach(m=>m.remove()); S.dest=null; S.stops=[]; S.routes=[]; $("q").value=""; $("clearQ").hidden=true; }
 
 /* ---------------- sheet ---------------- */
 function openSheet(html){ S.view=""; const s=$("sheet"); s.innerHTML=html; s.scrollTop=0; s.classList.remove("closed"); requestAnimationFrame(()=>setSheetVar(sheetH())); }
@@ -881,7 +938,7 @@ function tripH(){ return $("tripbar").offsetHeight||84; }
 function setSheetVar(px){ document.documentElement.style.setProperty("--sheet-h", px+"px");
   // tall sheets: tuck the floating buttons away so they never collide with the search bar
   const tall = px > innerHeight - 420; $("fabR").style.visibility = tall?"hidden":""; $("speedo").style.visibility = tall?"hidden":""; }
-function afterSheet(){ if(S.nav) closeSheet(); else if(S.routes.length) renderRouteSheet(); else closeSheet(); }
+function afterSheet(){ if(S.nav||S.tnav) closeSheet(); else if(S.mode==="transit" && S.transit && S.dest) renderTransitSheet(); else if(S.routes.length) renderRouteSheet(); else closeSheet(); }
 
 /* ---------------- directions list (every junction, in order) ---------------- */
 function roadLabel(st){ const ref=(st.ref||"").replace(/;/g," / "), nm=st.name||""; return ref&&nm&&!nm.includes(ref) ? ref+" · "+nm : (nm||ref); }
@@ -1032,6 +1089,276 @@ async function loadIncidents(){
   S.incidents=[...out.values()].slice(0,200); drawReports();
 }
 
+/* ---------------- public transport (Transitous / MOTIS journey planner) ---------------- */
+S.dmode = ["car","moto","bike","foot"].includes(S.mode) ? S.mode : store.get("dmode","car");
+let transitVer = store.get("trVer", null);
+function setTravelMode(m){
+  S.mode = MODES[m] ? m : "car"; store.set("mode",S.mode);
+  if(S.mode!=="transit"){ S.dmode=S.mode; store.set("dmode",S.dmode); }
+  paintTSwitch();
+}
+function paintTSwitch(){
+  const tr=S.mode==="transit";
+  document.querySelectorAll("#tswitch [data-t]").forEach(b=>{ const on=(b.dataset.t==="transit")===tr; b.classList.toggle("on",on); b.setAttribute("aria-selected",on); });
+  if(S.searchMode!=="stop") $("q").placeholder = tr ? "Where to by bus or train?" : "Where to?";
+  else $("q").placeholder = "Add a stop (or tap Nearby)";
+}
+document.querySelectorAll("#tswitch [data-t]").forEach(b=>b.onclick=()=>{
+  const want = b.dataset.t==="transit" ? "transit" : S.dmode;
+  if(want===S.mode) return; setTravelMode(want); if(S.dest && !S.nav && !S.tnav) setDest(S.dest,true);
+});
+// Polyline decoding with plain arithmetic: precision-7 longitudes overflow 32-bit bitwise maths.
+function decodePoly(str, prec){
+  const f=Math.pow(10,prec), out=[]; let i=0, lat=0, lng=0;
+  const next=()=>{ let r=0, m=1, b; do{ b=str.charCodeAt(i++)-63; r+=(b%32)*m; m*=32; }while(b>=32); return (r%2)? -(r+1)/2 : r/2; };
+  while(i<str.length){ lat+=next(); lng+=next(); out.push([lng/f, lat/f]); }
+  return out;
+}
+function legCoords(l){
+  if(l._c) return l._c;
+  const g=l.legGeometry, start={lat:l.from.lat, lng:l.from.lon};
+  if(g && g.points){
+    // read the precision from the leg; if the first point lands far from the stop, try the other precision
+    const first=g.precision || (transitVer==="v1"?7:6);
+    for(const pr of [first, first===7?6:7, 5]){ try{ const c=decodePoly(g.points, pr);
+      if(c.length>1 && hav({lat:c[0][1],lng:c[0][0]}, start)<3000) return (l._c=c); }catch(e){} }
+  }
+  return (l._c=[[l.from.lon,l.from.lat],[l.to.lon,l.to.lat]]);
+}
+function legKm(l){ const c=legCoords(l); let d=0; for(let i=1;i<c.length;i++) d+=hav({lat:c[i-1][1],lng:c[i-1][0]},{lat:c[i][1],lng:c[i][0]}); return d/1000; }
+// What a leg is, for icons and fares.
+function legKind(l){
+  const m=l.mode, ag=[l.agencyName,l.routeLongName,l.routeShortName,l.displayName].filter(Boolean).join(" ");
+  if(m==="WALK") return "walk";
+  if(m==="CAR"||m==="CAR_PARKING") return "car";
+  if(/\bERL\b|KLIA (Ekspres|Transit)|express rail/i.test(ag)) return "erl";
+  if(/\bETS\b|intercity|antarabandar/i.test(ag) || ["LONG_DISTANCE","HIGHSPEED_RAIL","REGIONAL_FAST_RAIL","NIGHT_RAIL"].includes(m)) return "ets";
+  if(/KTM|komuter|keretapi/i.test(ag) || ["RAIL","REGIONAL_RAIL","SUBURBAN"].includes(m)) return "ktm";
+  if(["SUBWAY","METRO","TRAM","MONORAIL","FUNICULAR","CABLE_CAR","AERIAL_LIFT","AREAL_LIFT"].includes(m)) return "rail";
+  if(/\bBRT\b|sunway/i.test(ag)) return "brt";
+  if(/go ?kl|bas percuma|free shuttle|smart selangor|bas ?mutiara percuma/i.test(ag)) return "free";
+  if(m==="BUS"||m==="COACH") return /rapid|prasarana|feeder|myBAS/i.test(ag) ? "rapid" : "bus";
+  if(m==="FERRY") return "ferry";
+  return "other";
+}
+const KIND_ICO={walk:"🚶",car:"🚗",erl:"🚄",ets:"🚄",ktm:"🚆",rail:"🚇",brt:"🚌",free:"🚌",rapid:"🚌",bus:"🚌",ferry:"⛴️",other:"🚐"};
+const KIND_COL={erl:"#6a2c91",ets:"#0f4c97",ktm:"#1964b7",rail:"#1463ff",brt:"#0a8f6a",free:"#7c3aed",rapid:"#1463ff",bus:"#2563eb",ferry:"#0891b2",other:"#475569",car:"#0f1d33"};
+// Estimated adult cashless fares in RM. Real fares depend on the exact station pair; these are rough guides.
+const clampN=(a,lo,hi)=>Math.min(hi,Math.max(lo,a));
+function legFare(l){
+  const k=legKind(l), km=legKm(l);
+  switch(k){
+    case "rail":  return clampN(0.5+0.16*km, 1.0, 6.5);
+    case "ktm":   return clampN(0.6+0.12*km, 1.3, 12);
+    case "ets":   return clampN(0.12*km, 9, 110);
+    case "erl":   return km>40 ? 55 : clampN(0.9*km, 6, 55);
+    case "brt":   return 1.0;
+    case "rapid": return 1.0;
+    case "bus":   return clampN(1+0.08*km, 1, 25);
+    case "ferry": return 2.0;
+    default:      return 0;
+  }
+}
+// LRT, MRT and monorail changes within the paid area usually continue on one fare, so price rail per journey.
+function itinFare(it){
+  let total=0, railKm=0;
+  const flush=()=>{ if(railKm>0) total+=clampN(0.5+0.16*railKm,1.0,6.5); railKm=0; };
+  it.legs.forEach(l=>{ const k=legKind(l); if(k==="walk"||k==="car") return; if(k==="rail"){ railKm+=legKm(l); return; } flush(); total+=legFare(l); });
+  flush(); return Math.round(total*100)/100;
+}
+function itinInfo(it){
+  const rides=it.legs.filter(l=>!["WALK","CAR","CAR_PARKING"].includes(l.mode));
+  const walk=it.legs.filter(l=>l.mode==="WALK").reduce((a,l)=>a+(l.duration||0),0);
+  return {walkMin:Math.round(walk/60), changes:Math.max(0,rides.length-1), fare:itinFare(it), live:rides.some(l=>l.realTime)};
+}
+const tms=t=>typeof t==="number"?t:new Date(t).getTime();
+const hm=t=>clock(new Date(tms(t)));
+async function transitFetch(from, to, o){
+  const q=new URLSearchParams({fromPlace:from.lat.toFixed(6)+","+from.lng.toFixed(6), toPlace:to.lat.toFixed(6)+","+to.lng.toFixed(6),
+    numItineraries:"6", maxPreTransitTime:"1500", maxPostTransitTime:"1500"});
+  if(o.time){ q.set("time", new Date(o.time).toISOString()); if(o.arriveBy) q.set("arriveBy","true"); }
+  const vers = transitVer ? [transitVer] : ["v5","v4","v3","v2","v1","v6"];
+  let last="no answer";
+  for(const v of vers){
+    let res; try{ res=await fetch(TRANSIT_API+v+"/plan?"+q.toString()); }catch(e){ throw new Error("the public transport service couldn't be reached"); }
+    if(res.status===404){ last="not found"; if(transitVer){ transitVer=null; store.set("trVer",null); return transitFetch(from,to,o); } continue; }
+    if(res.status===429) throw new Error("too many searches right now, try again in a minute");
+    if(!res.ok){ last="error "+res.status; continue; }
+    transitVer=v; store.set("trVer",v); return await res.json();
+  }
+  throw new Error(last);
+}
+async function loadTransit(force){
+  const d=S.dest; if(!d) return;
+  const prev=S.transit;
+  const T = (prev && prev.for===d && !force) ? prev : (S.transit={for:d, list:[], sel:-1, err:null, when:prev?.when||"now", at:prev?.at||"", drive:prev?.for===d?prev.drive:null});
+  T.loading=true; T.err=null; renderTransitSheet();
+  const from=S.pos||{lat:map.getCenter().lat, lng:map.getCenter().lng};
+  let time=null; if(T.when!=="now" && T.at){ time=new Date(T.at).getTime(); if(!isFinite(time)) time=null; }
+  // a driving estimate to compare against, fetched alongside
+  if(!T.drive) osrmRoutes(MODES.car.osrm, from, [], d).then(rs=>{ T.drive=rs[0]; if(S.transit===T && !T.loading) renderTransitSheet(); }).catch(()=>{});
+  try{
+    const j=await transitFetch(from, d, {time, arriveBy:T.when==="arrive"});
+    if(S.transit!==T) return;
+    T.list=(j.itineraries||[]).filter(it=>it.legs && it.legs.some(l=>!["WALK","CAR","CAR_PARKING"].includes(l.mode)));
+    T.list.forEach(it=>it.info=itinInfo(it));
+    if(!T.list.length) T.err = (j.itineraries||[]).length || (j.direct||[]).length ? "It's quicker to walk: no bus or train helps on this trip." : "No public transport found for this trip. Timetables for this area may not be available yet.";
+    T.sel = T.list.length ? bestIndex(T.list) : -1;
+  }catch(e){ if(S.transit===T) T.err="Public transport isn't reachable right now: "+e.message+"."; }
+  T.loading=false;
+  if(S.transit===T){ renderTransitSheet(); if(T.sel>=0) drawItin(T.list[T.sel], true); }
+}
+// best overall: minutes + 5 per change + half the walking minutes + 3 minutes per RM
+function bestIndex(list){ const sc=list.map(it=>it.duration/60+it.info.changes*5+it.info.walkMin*0.5+it.info.fare*3); return sc.indexOf(Math.min(...sc)); }
+function legChip(l){
+  const k=legKind(l);
+  if(k==="walk") return l.duration>=60 ? '<span class="leg walk">🚶'+Math.round(l.duration/60)+'</span>' : '';
+  if(k==="car") return '<span class="leg" style="background:'+KIND_COL.car+'">🚗'+Math.round(l.duration/60)+'</span>';
+  const nm=l.routeShortName||l.displayName||l.tripShortName||({ktm:"KTM",ets:"ETS",erl:"ERL"}[k]||"");
+  const bg=l.routeColor?"#"+String(l.routeColor).replace("#",""):KIND_COL[k], fg=l.routeTextColor?"#"+String(l.routeTextColor).replace("#",""):"#fff";
+  return '<span class="leg" style="background:'+esc(bg)+';color:'+esc(fg)+'">'+KIND_ICO[k]+' '+esc(nm)+'</span>';
+}
+function lineColor(l){ const k=legKind(l); return l.routeColor?"#"+String(l.routeColor).replace("#",""):(KIND_COL[k]||"#1463ff"); }
+function renderTransitSheet(){
+  const T=S.transit, d=S.dest; if(!T||!d) return;
+  let h='<div class="grab"></div><div class="hd"><h2>'+esc(d.name)+'</h2><p>'+esc(d.sub||"")+'</p></div>';
+  h+='<div class="modes">'+Object.entries(MODES).map(([k,m])=>'<button class="mode'+(k===S.mode?' on':'')+'" data-mode="'+k+'">'+m.ico+' '+m.label+'</button>').join("")+'</div>';
+  const nowLocal=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
+  h+='<div class="trbar"><select id="trWhen" aria-label="When"><option value="now"'+(T.when==="now"?" selected":"")+'>Leave now</option><option value="depart"'+(T.when==="depart"?" selected":"")+'>Depart at</option><option value="arrive"'+(T.when==="arrive"?" selected":"")+'>Arrive by</option></select>'+
+     (T.when!=="now"?'<input id="trAt" type="datetime-local" value="'+esc(T.at||nowLocal)+'" aria-label="Date and time">':'')+'</div>';
+  if(T.drive) h+='<div class="trcmp">🚗 Driving instead: <b>'+fmtDur(T.drive.duration)+'</b> · '+fmtDist(T.drive.distance)+' (no traffic)</div>';
+  if(T.loading){ openSheet(h+'<p class="hint">Finding bus and train connections…</p>'); S.view="transit"; wireTransit(); return; }
+  if(T.err){ openSheet(h+'<p class="hint">'+esc(T.err)+'</p><div class="row"><button class="btn" id="trRetry">Try again</button><button class="btn" id="closeBtn">Close</button></div>'); S.view="transit"; wireTransit(); return; }
+  const L0=T.list, fastest=Math.min(...L0.map(i=>i.duration)), cheapest=Math.min(...L0.map(i=>i.info.fare)), leastWalk=Math.min(...L0.map(i=>i.info.walkMin)), best=bestIndex(L0);
+  h+='<div class="routes">';
+  L0.forEach((it,i)=>{ const f=it.info;
+    const tags=(i===best&&L0.length>1?'<span class="tag best">Best</span>':'')+(it.duration===fastest&&i!==best&&L0.length>1?'<span class="tag best">Fastest</span>':'')+
+      (Math.abs(f.fare-cheapest)<0.01&&L0.length>1?'<span class="tag cheap">Cheapest</span>':'')+(f.walkMin===leastWalk&&L0.length>1&&i!==best?'<span class="tag info">Least walking</span>':'')+
+      (f.live?'<span class="tag live">● Live</span>':'');
+    let chips=''; const parts=it.legs.map(legChip).filter(Boolean); chips=parts.join('<span class="legsep">›</span>');
+    h+='<button class="rc tr'+(i===T.sel?' sel':'')+'" data-ti="'+i+'"><span class="t">'+fmtDur(it.duration)+'</span><span class="fare">'+(f.fare>0?'RM'+f.fare.toFixed(2):'Free')+'</span>'+
+       '<span class="via">'+tags+hm(it.startTime)+' → '+hm(it.endTime)+' · '+(f.changes?f.changes+' change'+(f.changes>1?'s':''):'direct')+' · walk '+f.walkMin+' min</span>'+
+       '<span class="legs1">'+chips+'</span></button>';
+    if(i===T.sel) h+=itinSteps(it);
+  });
+  h+='</div>';
+  if(T.sel>=0) h+='<div class="row"><button class="btn go" id="trGo">GO</button><button class="btn" id="trSim">Test ride</button></div>'+
+    '<div class="row"><button class="btn sm" id="trRemind">🕒 Remind me</button><button class="btn sm" id="trShare">Share</button><button class="btn sm" id="trRetry">Refresh times</button><button class="btn sm" id="closeBtn">Close</button></div>';
+  else h+='<div class="row"><button class="btn sm" id="closeBtn">Close</button></div>';
+  h+='<p class="hint">Fares are estimates for adults paying by Touch \'n Go card or e-wallet; students, seniors and OKU pay about half on Rapid KL. Timetables come from Transitous and may miss some routes. ● Live means real-time arrival data.</p>';
+  const sc=$("sheet").scrollTop; openSheet(h); S.view="transit"; if(T.keepScroll){ $("sheet").scrollTop=sc; T.keepScroll=false; }
+  wireTransit();
+}
+function itinSteps(it){
+  let h='<ol class="tsteps">';
+  it.legs.forEach(l=>{ const k=legKind(l), mins=Math.max(1,Math.round((l.duration||0)/60));
+    if(k==="walk"){ if((l.duration||0)<45) return;
+      h+='<li class="walk"><i style="--lc:var(--surface-2);background:var(--surface-2);color:var(--fg)">🚶</i><span class="tx"><b>Walk '+mins+' min</b><span>'+(l.distance?fmtDist(l.distance)+' · ':'')+'to '+esc(l.to.name==="END"?S.dest.name:l.to.name)+'</span></span></li>'; return; }
+    if(k==="car"){ h+='<li style="--lc:'+KIND_COL.car+'"><i>🚗</i><span class="tx"><b>Drive '+mins+' min</b><span>to '+esc(l.to.name)+' and park</span></span></li>'; return; }
+    const col=lineColor(l), nm=[l.routeShortName||l.displayName, l.routeLongName].filter(Boolean).join(" · ")||k.toUpperCase();
+    const mid=l.intermediateStops||[], nstops=mid.length+1, fare=legFare(l);
+    const late = l.realTime && l.departure && l.scheduledDeparture ? Math.round((tms(l.departure)-tms(l.scheduledDeparture))/60000) : 0;
+    h+='<li style="--lc:'+esc(col)+'"><i style="background:'+esc(col)+'">'+KIND_ICO[k]+'</i><span class="tx">'+
+       '<b>'+hm(l.startTime)+' · '+esc(nm)+'</b>'+
+       '<span>Board at <b>'+esc(l.from.name)+'</b>'+(l.headsign?' towards '+esc(l.headsign):'')+(late>1?' · '+late+' min late':late<-1?' · '+(-late)+' min early':'')+'</span>'+
+       '<span>'+nstops+' stop'+(nstops>1?'s':'')+' · '+mins+' min'+(fare?' · ≈ RM'+fare.toFixed(2):'')+'</span>'+
+       (mid.length?'<details><summary>Show '+mid.length+' stop'+(mid.length>1?'s':'')+' on the way</summary>'+mid.map(st=>esc(st.name)+(st.arrival?' ('+hm(st.arrival)+')':'')).join("<br>")+'</details>':'')+
+       '<span>Get off at <b>'+esc(l.to.name)+'</b> · '+hm(l.endTime)+'</span></span></li>'; });
+  return h+'<li><i style="background:var(--danger)">🏁</i><span class="tx"><b>Arrive '+hm(it.endTime)+'</b><span>Total fare ≈ '+(it.info.fare>0?'RM'+it.info.fare.toFixed(2):'free')+'</span></span></li></ol>';
+}
+function wireTransit(){
+  document.querySelectorAll("#sheet [data-mode]").forEach(b => b.onclick=()=>{ setTravelMode(b.dataset.mode); setDest(S.dest,true); });
+  document.querySelectorAll(".rc.tr").forEach(b=>b.onclick=()=>{ const i=+b.dataset.ti, T=S.transit; T.sel = T.sel===i ? -1 : i; T.keepScroll=true; renderTransitSheet(); drawItin(T.list[T.sel], true); });
+  if($("trWhen")) $("trWhen").onchange=e=>{ const T=S.transit; T.when=e.target.value;
+    if(T.when!=="now" && !T.at){ const d=new Date(Date.now()+30*60000); d.setMinutes(Math.ceil(d.getMinutes()/15)*15,0,0); T.at=new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16); }
+    loadTransit(true); };
+  if($("trAt")) $("trAt").onchange=e=>{ S.transit.at=e.target.value; loadTransit(true); };
+  if($("trRetry")) $("trRetry").onclick=()=>loadTransit(true);
+  if($("closeBtn")) $("closeBtn").onclick=closeRoute;
+  const it=S.transit?.list?.[S.transit.sel];
+  if($("trGo")) $("trGo").onclick=()=>startTransitNav(it,false);
+  if($("trSim")) $("trSim").onclick=()=>startTransitNav(it,true);
+  if($("trShare")) $("trShare").onclick=()=>shareItin(it);
+  if($("trRemind")) $("trRemind").onclick=()=>remindItin(it);
+}
+function setTransitData(fc){ S.transitDraw=fc; const src=map.getSource("transit"); if(src) src.setData(fc||{type:"FeatureCollection",features:[]}); }
+function drawItin(it, fit){
+  if(!it){ setTransitData(null); return; }
+  const feats=[], all=[];
+  it.legs.forEach(l=>{ const c=legCoords(l), k=legKind(l); all.push(...c);
+    if(k==="walk") feats.push({type:"Feature",properties:{k:"walk"},geometry:{type:"LineString",coordinates:c}});
+    else { const col=lineColor(l);
+      feats.push({type:"Feature",properties:{k:"ride",c:col},geometry:{type:"LineString",coordinates:c}});
+      [l.from,l.to].forEach(p=>feats.push({type:"Feature",properties:{k:"stop",c:col,name:p.name||""},geometry:{type:"Point",coordinates:[p.lon,p.lat]}})); } });
+  setTransitData({type:"FeatureCollection",features:feats});
+  if(fit && all.length){ const b=new maplibregl.LngLatBounds(); all.forEach(c=>b.extend(c));
+    map.fitBounds(b,{padding:{top:($("top").offsetHeight||100)+20,bottom:Math.min(sheetH(),innerHeight*0.6)+30,left:40,right:80}, bearing:0, pitch:0, duration:700, maxZoom:16}); }
+}
+async function shareItin(it){
+  if(!it) return;
+  const lines=["Public transport to "+S.dest.name+": "+hm(it.startTime)+" → "+hm(it.endTime)+" ("+fmtDur(it.duration)+", ≈ RM"+it.info.fare.toFixed(2)+")"];
+  it.legs.forEach(l=>{ const k=legKind(l); if(k==="walk"){ if(l.duration>=60) lines.push("🚶 Walk "+Math.round(l.duration/60)+" min to "+(l.to.name==="END"?S.dest.name:l.to.name)); return; }
+    lines.push(KIND_ICO[k]+" "+hm(l.startTime)+" "+(l.routeShortName||l.displayName||k.toUpperCase())+" from "+l.from.name+(l.headsign?" towards "+l.headsign:"")+", get off at "+l.to.name+" ("+hm(l.endTime)+")"); });
+  const text=lines.join("\n");
+  try{ if(navigator.share){ await navigator.share({title:"Trip plan", text}); return; } }catch(e){ if(e.name==="AbortError") return; }
+  try{ await navigator.clipboard.writeText(text); toast("Trip copied. Paste it into WhatsApp or any chat."); }catch(e){ toast("Couldn't copy on this phone"); }
+}
+async function remindItin(it){
+  if(!it) return;
+  const leave=tms(it.startTime)-5*60000, arrive=tms(it.endTime);
+  S.plans=[...S.plans.filter(p=>p.arrive>Date.now()), {id:Date.now().toString(36), dest:{name:S.dest.name, sub:S.dest.sub, lat:S.dest.lat, lng:S.dest.lng}, leave, arrive, mode:"transit"}];
+  store.set("plans",S.plans);
+  try{ if("Notification" in window && Notification.permission==="default") await Notification.requestPermission(); }catch(e){}
+  toast("Reminder set: leave by "+dayTime(leave)+" for the "+hm(it.startTime)+" connection");
+}
+
+/* ---- step-by-step transit guidance ---- */
+function itinRoute(it){
+  const pts=[], legStart=[];
+  it.legs.forEach(l=>{ legStart.push(Math.max(0,pts.length-1)); legCoords(l).forEach((c,j)=>{ if(pts.length && j===0) return; pts.push({lat:c[1],lng:c[0]}); }); });
+  const cum=[0]; for(let i=1;i<pts.length;i++) cum[i]=cum[i-1]+hav(pts[i-1],pts[i]);
+  const R={pts, cum, legStart, it};
+  R.legEnd=it.legs.map((l,i)=>cum[i+1<legStart.length?legStart[i+1]:pts.length-1]);
+  // where each intermediate stop sits along the line, to count stops left
+  R.stopsAt=it.legs.map((l,i)=>(l.intermediateStops||[]).map(st=>isFinite(st.lat)?nearest(R,{lat:st.lat,lng:st.lon},legStart[i]).along:null).filter(x=>x!=null));
+  return R;
+}
+async function startTransitNav(it, sim){
+  if(!it) return;
+  S.R=itinRoute(it); S.tnav=true; S.lastIdx=0; S.follow=true; S.spoken={}; S.tleg=-1;
+  try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); actx.resume?.(); }catch(e){}
+  closeSheet(); $("top").hidden=true; $("navtop").hidden=false; $("tripbar").hidden=false; $("speedo").hidden=true; $("layersBtn").hidden=true;
+  $("navFuel").hidden=true; $("lanes").hidden=true; $("navThen").hidden=true; $("locBtn").classList.add("on"); setSheetVar(tripH());
+  drawItin(it,false);
+  try{ S.wake=await navigator.wakeLock?.request("screen"); }catch(e){}
+  say(L().start);
+  if(sim) startSim(); else if(S.pos) onPos(S.pos); else map.jumpTo({center:ll(S.R.pts[0]), zoom:16});
+}
+function transitTick(p){
+  const R=S.R, it=R.it, near=nearest(R,p,S.lastIdx); S.lastIdx=near.i;
+  let li=0; while(li<it.legs.length-1 && near.along>=R.legEnd[li]-15) li++;
+  const l=it.legs[li], k=legKind(l), toEnd=Math.max(0,R.legEnd[li]-near.along), total=R.cum[R.cum.length-1];
+  let arrow, title, sub;
+  if(k==="walk"){ arrow='<span style="font-size:40px">🚶</span>';
+    const nxt=it.legs[li+1]; title="Walk to "+(l.to.name==="END"?S.dest.name:l.to.name);
+    sub = nxt ? "Then "+(nxt.routeShortName||nxt.displayName||legKind(nxt).toUpperCase())+" at "+hm(nxt.startTime)+(nxt.headsign?" towards "+nxt.headsign:"") : "";
+    $("navDist").textContent=fmtDist(toEnd);
+  } else {
+    const left=1+R.stopsAt[li].filter(a=>a>near.along+30).length;
+    arrow='<span style="font-size:40px">'+KIND_ICO[k]+'</span>';
+    title=(l.routeShortName||l.displayName||k.toUpperCase())+(l.headsign?" → "+l.headsign:"");
+    sub="Get off at "+l.to.name+" · "+hm(l.endTime);
+    $("navDist").textContent=left+" stop"+(left>1?"s":"");
+    if(li!==S.tleg){ S.tleg=li; say("Board "+(l.routeShortName||l.displayName||"the "+k)+(l.headsign?" towards "+l.headsign:"")+". Get off at "+l.to.name+", after "+left+" stop"+(left>1?"s":"")+"."); }
+    if((left===1 || toEnd<700) && !S.spoken["off"+li]){ S.spoken["off"+li]=1; navigator.vibrate?.([300,150,300]); beep(2);
+      say("Get off at the next stop, "+l.to.name+"."); toast("🔔 Get off at the next stop: "+l.to.name); }
+  }
+  $("navArrow").innerHTML=arrow; $("navIns").textContent=title; $("navRoad").textContent=sub;
+  const leftSec=Math.max(0,(tms(it.endTime)-Date.now())/1000);
+  $("etaClock").textContent=hm(it.endTime); $("etaSub").textContent=(S.sim?fmtDur(it.duration*(1-near.along/Math.max(total,1))):fmtDur(leftSec))+" · "+fmtDist(Math.max(0,total-near.along))+" · step "+(li+1)+" of "+it.legs.length;
+  if(total-near.along<30){ say(L().arrive); toast(L().arrive+addPoints(15)); endNav(); }
+}
+
 /* ---------------- voice ---------------- */
 function say(text){
   if(!S.voice || !("speechSynthesis" in window)) return;
@@ -1056,6 +1383,7 @@ async function startNav(sim){
   else map.jumpTo({center:ll(S.R.pts[0]), zoom:17});
 }
 function endNav(){
+  const wasT=S.tnav; S.tnav=false; $("navFuel").hidden=false; if(wasT) setTransitData(null);
   S.nav=false; stopSim(); try{ S.wake?.release(); }catch(e){} S.wake=null; if(Live.code) Live.stop(); if(S.hud) toggleHud(false);
   $("micFab").hidden=true; $("layersBtn").hidden=false;
   $("navtop").hidden=true; $("tripbar").hidden=true; $("top").hidden=false; $("speedo").hidden=true; $("prog").hidden=true; $("lanes").hidden=true;
@@ -1064,7 +1392,7 @@ function endNav(){
   if("speechSynthesis" in window) speechSynthesis.cancel();
 }
 $("endBtn").onclick=endNav;
-$("manPanel").onclick=()=>directionsSheet(S.R,true);
+$("manPanel").onclick=()=>{ if(S.tnav){ openSheet('<div class="grab"></div><div class="hd"><h2>Trip steps</h2><p>'+esc(S.dest?.name||"")+'</p></div>'+itinSteps(S.R.it)+'<div class="row"><button class="btn" id="cl">Back to the map</button></div>'); $("cl").onclick=()=>{ closeSheet(); S.follow=true; }; return; } directionsSheet(S.R,true); };
 document.addEventListener("visibilitychange", async () => { if(S.nav && document.visibilityState==="visible" && !S.wake){ try{ S.wake=await navigator.wakeLock?.request("screen"); }catch(e){} } });
 
 function nearest(R,p,from){
@@ -1119,7 +1447,7 @@ async function rerouteWithStops(){ const from=S.pos||S.R.pts[S.lastIdx]; S.lastR
 
 /* ---------------- test drive (simulation) ---------------- */
 function startSim(){
-  stopSim(); let d=0; const v=(MODES[S.mode]||MODES.car).sim;
+  stopSim(); let d=0; const v=S.tnav?11:(MODES[S.mode]||MODES.car).sim;
   S.sim=setInterval(()=>{
     const R=S.R, total=R.cum[R.cum.length-1];
     if(d===0 && S.simFrom){ d=nearest(R,S.simFrom,0).along; S.simFrom=null; }
@@ -1410,7 +1738,8 @@ async function runCommand(raw){
   const m=t.match(/^(?:navigate to|navigate|go to|take me to|drive to|directions to|pergi ke|bawa saya ke|导航到|导航去|带我去|去)\s*(.+)$/);
   const near=CMD_NEAR.find(([,re])=>re.test(t));
   if(near && (!m || /(near|nearby|nearest|closest|find|cari|terdekat|berdekatan|附近|最近|找)/.test(t))){ openPlaces(near[0]); return; }
-  const q=(m?m[1]:raw).trim(); if(!q) return;
+  let q=(m?m[1]:raw).trim(); if(!q) return;
+  if(/(by (bus|train|lrt|mrt|public transport)|naik (bas|tren|lrt|mrt)|坐(巴士|地铁|火车)|搭(巴士|地铁))/.test(q)){ setTravelMode("transit"); q=q.replace(/\s*(by (bus|train|lrt|mrt|public transport)|naik (bas|tren|lrt|mrt)|坐(巴士|地铁|火车)|搭(巴士|地铁))\s*/g," ").trim(); }
   const list=await searchPlaces(q);
   if(!list || !list.length){ toast("No place called \""+q+"\" found."); return; }
   if(S.nav){ go(list[0]); toast("Going to "+list[0].name); return; }
@@ -1508,7 +1837,7 @@ function openSettings(){
     row('Shortest route','Shortest distance instead of fastest time', sw("setShort",S.shortest))+
     '<div class="sec">Map</div>'+
     block('Map type','Also on the map button', '<div style="margin-top:8px">'+seg("setMapT",Object.entries(MAPTYPES).map(([k,v])=>[k,v.label]),S.mapType)+'</div>')+
-    row('Heading-up 3D view','Map turns with you while driving', sw("setHead",S.headUp))+
+    row('Heading-up 3D view','Off: north always at the top. On: the map turns with you.', sw("setHead",S.headUp))+
     row('HUD mode','Big mirrored speed and turns for the windscreen. Also: tap the speedometer.', '<button class="btn sm" id="setHud">Open</button>')+
     '<div class="sec">Live traffic</div>'+
     block('TomTom API key','Free key from developer.tomtom.com → My Dashboard. Adds coloured traffic, traffic-aware ETAs, live incidents and predicted times for planned drives.',
@@ -1528,11 +1857,11 @@ function openSettings(){
   const swBind=(id,fn)=>{ if(!$(id)) return; $(id).onclick=()=>{ const on=!$(id).classList.contains("on"); $(id).classList.toggle("on",on); $(id).setAttribute("aria-checked",on); fn(on); }; };
   segBind("setLang",v=>{ S.lang=v; store.set("lang",v); drawReports(); say(v==="ms"?"Bahasa Melayu":v==="zh"?"中文语音":"English voice"); });
   swBind("setVoice",on=>{ S.voice=on; store.set("voice",on); paintVoice(); });
-  segBind("setMode",v=>{ S.mode=v; store.set("mode",v); });
+  segBind("setMode",v=>setTravelMode(v));
   swBind("setToll",on=>{ S.avoidTolls=on; store.set("avoidTolls",on); });
   swBind("setHw",on=>{ S.avoidHw=on; store.set("avoidHw",on); });
   swBind("setShort",on=>{ S.shortest=on; store.set("shortest",on); });
-  swBind("setHead",on=>{ S.headUp=on; store.set("headUp",on); });
+  swBind("setHead",on=>{ S.headUp=on; store.set("headUp2",on); });
   swBind("setTraffic",on=>setTraffic(on));
   segBind("setMapT",v=>setMapType(v));
   $("setHud").onclick=()=>{ closeSheet(); toggleHud(true); };
@@ -1564,14 +1893,14 @@ $("layersBtn").onclick=openMapTypes;
 $("reportBtn").onclick=openReport;
 $("locBtn").onclick=()=>{ S.follow=true; $("locBtn").classList.add("on");
   if(!S.pos){ toast("Waiting for GPS signal…"); return; }
-  if(S.nav) followCam(S.pos,(S.speed||0)*3.6); else map.easeTo({center:ll(S.pos), zoom:Math.max(map.getZoom(),15), duration:600}); };
-$("compass").onclick=()=>{ if(S.nav){ S.headUp=!S.headUp; store.set("headUp",S.headUp); toast(S.headUp?"Heading-up 3D":"North-up 2D"); if(S.pos&&S.follow) followCam(S.pos,(S.speed||0)*3.6); }
+  if(S.nav||S.tnav) followCam(S.pos,(S.speed||0)*3.6); else map.easeTo({center:ll(S.pos), zoom:Math.max(map.getZoom(),15), bearing:0, pitch:0, padding:camPad(), duration:600}); };
+$("compass").onclick=()=>{ if(S.nav){ S.headUp=!S.headUp; store.set("headUp2",S.headUp); toast(S.headUp?"Heading-up 3D":"North-up"); if(S.pos&&S.follow) followCam(S.pos,(S.speed||0)*3.6); }
   else map.easeTo({bearing:0, pitch:0, duration:500}); };
 function paintVoice(){ $("voiceBtn").classList.toggle("on",S.voice); $("voiceWaves").style.opacity=S.voice?1:.15; }
 $("voiceBtn").onclick=()=>{ S.voice=!S.voice; store.set("voice",S.voice); paintVoice(); toast(S.voice?"Voice on":"Voice muted"); if(S.voice) say(S.lang==="ms"?"Suara dihidupkan":S.lang==="zh"?"语音已开启":"Voice on"); };
 
 /* ---------------- boot ---------------- */
-paintVoice(); renderChips(); loadReports(); startGPS();
+paintVoice(); renderChips(); paintTSwitch(); loadReports(); startGPS();
 setInterval(loadReports, 30000);
 setInterval(()=>{ if(S.ttKey) loadIncidents().then(()=>{ if(S.nav) buildProgress(); }); }, 300000);
 setInterval(checkPlans, 60000); setTimeout(checkPlans, 3000);
