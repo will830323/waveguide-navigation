@@ -339,6 +339,38 @@ body.navmode .navonly[hidden]{display:none!important}
 .wg .wt span{font-size:13px;color:var(--muted)}
 .wg .wt .lm{color:var(--fg);font-weight:700}
 
+/* trip planner */
+.tpf{position:relative;display:grid;grid-template-columns:1fr auto;gap:8px 8px;align-items:center;margin:0 0 10px}
+.tpin{display:flex;align-items:center;gap:8px;background:var(--surface-2);border-radius:14px;padding:4px 6px 4px 8px;border:1.5px solid var(--line);min-width:0}
+.tpin:focus-within{border-color:var(--route)}
+.tpin input{flex:1;min-width:0;border:0;background:transparent;color:var(--fg);font:700 15px var(--f-body);padding:9px 2px;outline:none}
+.tpin input::placeholder{color:var(--muted);font-weight:400}
+.dot{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font:700 13px var(--f-display);color:#fff}
+.dot.a{background:#14a86a}.dot.b{background:#e8262c}
+.tpin .me{width:auto;height:auto}
+.tpswap{grid-row:1/3;grid-column:2;width:40px;height:40px;border-radius:12px;background:var(--surface-2);font-size:18px;display:grid;place-items:center;border:1.5px solid var(--line)}
+.tpsug{grid-column:1/-1;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;overflow:hidden auto;max-height:240px}
+.tpsug button{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:10px 12px;border-top:1px solid var(--line)}
+.tpsug button:first-child{border-top:0}
+.tpsug b{display:block;font-weight:700}
+.tpsug span{color:var(--muted);font-size:12.5px}
+.tpsum{margin:12px 0;padding:14px 16px;border-radius:18px;background:linear-gradient(160deg,#11362f,#081e1c);color:#f1f8f4;box-shadow:0 0 0 1px rgba(198,242,63,.16),0 10px 24px rgba(0,0,0,.25)}
+.tpsum .ab{font-size:13px;color:#a3bdb4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tpsum .rec{font:700 13px var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:#c6f23f;margin-top:8px}
+.tpsum .big{font:700 min(5.2vw,26px)/1.2 var(--f-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:linear-gradient(90deg,#c6f23f,#1ee08c);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;font-variant-numeric:tabular-nums}
+.tpsum .why{font-size:13px;color:#cfe0d9;margin-top:4px}
+.mc{display:grid;grid-template-columns:auto 1fr auto;gap:2px 12px;align-items:center;width:100%;text-align:left;padding:12px 14px;border:2px solid var(--line);border-radius:16px;background:var(--surface)}
+.mc.rec{border-color:#14a86a;background:color-mix(in srgb,#1ee08c 7%,var(--surface))}
+.mc .mi{grid-row:1/4;font-size:28px}
+.mc .t{font:700 22px/1.1 var(--f-display);font-variant-numeric:tabular-nums}
+.mc .d{font:600 15px var(--f-display);color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
+.mc .ln{grid-column:2/4;font-size:13px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.mc .ln b{color:var(--fg)}
+.mcx{margin:-4px 0 4px;padding:10px 12px 12px;border:2px solid var(--line);border-top:0;border-radius:0 0 16px 16px;display:flex;flex-direction:column;gap:6px}
+.mcx .alt{display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:6px 0;border-top:1px dashed var(--line)}
+.mcx .alt:first-child{border-top:0}
+.frompin{width:26px;height:26px;border-radius:50%;background:#14a86a;color:#fff;border:3px solid #fff;display:grid;place-items:center;font:700 12px var(--f-display);box-shadow:0 2px 6px rgba(0,0,0,.4)}
+
 /* ---------- markers ---------- */
 .me{width:56px;height:56px;position:relative}
 .me::before{content:"";position:absolute;inset:6px;border-radius:50%;background:rgba(30,224,140,.35);animation:mepulse 2s ease-out infinite}
@@ -829,7 +861,8 @@ function showSuggestions(){
   if(saved.length){ box.insertAdjacentHTML("beforeend",'<div class="lh">Saved</div>'); saved.forEach(r=>box.appendChild(resultRow(r,r.ico))); }
   const plans=S.plans.filter(p=>p.arrive>Date.now());
   if(plans.length){ box.insertAdjacentHTML("beforeend",'<div class="lh">Planned drives</div>');
-    plans.forEach(p=>box.appendChild(resultRow({...p.dest, sub:"Leave "+dayTime(p.leave)+" · arrive "+dayTime(p.arrive)+(p.mode==="transit"?" · public transport":"")},p.mode==="transit"?"🚇":"🕒"))); }
+    plans.forEach(p=>{ const b=resultRow({...p.dest, sub:(p.from?"From "+p.from.name+" · ":"")+"Leave "+dayTime(p.leave)+" · arrive "+dayTime(p.arrive)+(p.mode==="transit"?" · public transport":"")},p.mode==="transit"?"🚇":"🗓️");
+      b.onclick=()=>{ $("results").hidden=true; $("q").blur(); openTripPlanner({from:p.from||null, to:p.dest, when:"arrive", at:localDT(p.arrive), auto:true}); }; box.appendChild(b); }); }
   if(S.recent.length){ box.insertAdjacentHTML("beforeend",'<div class="lh">Recent</div>'); S.recent.forEach(r=>box.appendChild(resultRow(r,"🕘"))); }
   box.hidden = !box.children.length;
 }
@@ -847,6 +880,7 @@ function renderChips(){
   if(S.saved.home) add("🏠 Home","saved",()=>setDest(S.saved.home));
   if(S.saved.work) add("🏢 Work","saved",()=>setDest(S.saved.work));
   add("🔎 Nearby","fuel",()=>openNearby());
+  add("🗓️ Plan trip","",()=>openTripPlanner());
   if(S.appMode==="tourist"){
     add("⭐ Famous food","",()=>openNearbyMap(["food","cafe"],true)); add("📸 Sights","",()=>openNearbyMap(["sight","culture"]));
     add("☕ Cafés","",()=>openNearbyMap(["cafe"])); add("🏨 Hotels","",()=>openNearbyMap(["hotel"])); add("🛍️ Malls","",()=>openNearbyMap(["mall","craft"]));
@@ -959,8 +993,9 @@ async function setDest(place, keepStops){
   S.dest=place; if(!keepStops) S.stops=[]; $("results").hidden=true; clearFuel();
   destMarker?.remove(); destMarker=pin("destpin",place);
   remember(place);
-  const from = S.pos || {lat:map.getCenter().lat, lng:map.getCenter().lng};
-  if(!S.pos) toast("No GPS fix yet, so routing from the map centre.");
+  const from = S.fromOverride || S.pos || {lat:map.getCenter().lat, lng:map.getCenter().lng};
+  if(!S.pos && !S.fromOverride) toast("No GPS fix yet, so routing from the map centre.");
+  S.fromMarker?.remove(); S.fromMarker = S.fromOverride ? pin("frompin", S.fromOverride, "A") : null;
   if(S.mode==="transit"){ S.routes=[]; setRouteData([]); loadTransit(true); return; }
   setTransitData(null);
   openSheet('<div class="grab"></div><div class="hd"><h2>'+esc(place.name)+'</h2><p>'+esc(place.sub||"")+'</p></div><p class="hint">Finding routes…</p>');
@@ -986,7 +1021,7 @@ function drawRoutes(){ if(!S.nav) setPassed(0);
 function drawNavRoute(){ setPassed(0); if(!S.styleReady||!S.R) return; setRouteData([{type:"Feature",properties:{sel:true,i:0},geometry:{type:"LineString",coordinates:S.R.coords}}]); }
 function renderRouteSheet(){
   const p=S.dest, best=S.routes[0];
-  let h='<div class="grab"></div><div class="hd"><h2>'+esc(p.name)+'</h2><p>'+esc(p.sub||"")+'</p></div>';
+  let h='<div class="grab"></div><div class="hd"><h2>'+esc(p.name)+'</h2><p>'+(S.fromOverride?'From <b>'+esc(S.fromOverride.name)+'</b> · ':'')+esc(p.sub||"")+'</p></div>';
   h+='<div class="modes">'+Object.entries(MODES).map(([k,m])=>'<button class="mode'+(k===S.mode?' on':'')+'" data-mode="'+k+'">'+m.ico+' '+m.label+'</button>').join("")+'</div>';
   if(motorised()) h+='<div class="prefs"><button class="pref'+(S.shortest?'':' on')+'" data-pref="fast">Fastest</button><button class="pref'+(S.shortest?' on':'')+'" data-pref="short">Shortest</button>'+
      '<button class="pref'+(S.avoidTolls?' on':'')+'" data-pref="toll">Avoid tolls</button><button class="pref'+(S.avoidHw?' on':'')+'" data-pref="hw">Avoid highways</button></div>';
@@ -1023,7 +1058,7 @@ function renderRouteSheet(){
   if($("wgBtn")) $("wgBtn").onclick=()=>openWalkGuide({coords:rsel.coords, steps:rsel.steps, title:"Walk to "+S.dest.name, back:renderRouteSheet});
   wireTourBox(rsel, renderRouteSheet);
   if(S.appMode==="tourist"){ if(!rsel.tour) loadTour(rsel).then(()=>{ if(S.view==="routes" && S.routes[S.sel]===rsel && !S.nav){ const sc=$("sheet").scrollTop; renderRouteSheet(); $("sheet").scrollTop=sc; } }); else drawTourMarkers(rsel); }
-  $("planBtn").onclick=()=>openPlan();
+  $("planBtn").onclick=()=>openTripPlanner({from:S.fromOverride||null, to:S.dest, auto:true});
   $("homeBtn").onclick=()=>savePlace("home"); $("workBtn").onclick=()=>savePlace("work"); $("closeBtn").onclick=closeRoute;
 }
 // Traffic lights and speed cameras along a route, from OpenStreetMap.
@@ -1045,7 +1080,7 @@ async function routeExtras(r){
 async function loadExtrasAll(){ const list=S.routes.slice(); for(const r of list){ await routeExtras(r); if(S.view==="routes" && !S.nav && S.routes===list) renderRouteSheet(); } }
 function addStop(place){ S.stops=[place]; if(S.nav) rerouteWithStops(); else setDest(S.dest,true); toast("Stop added: "+place.name); }
 function savePlace(k){ S.saved[k]={...S.dest}; store.set("saved",S.saved); renderChips(); toast((k==="home"?"Home":"Work")+" saved"); }
-function closeRoute(){ clearTourMarkers(); clearNear(); closeSheet(); setRouteData([]); setTransitData(null); S.transit=null; destMarker?.remove(); stopMarkers.forEach(m=>m.remove()); S.dest=null; S.stops=[]; S.routes=[]; $("q").value=""; $("clearQ").hidden=true; }
+function closeRoute(){ clearTourMarkers(); clearNear(); S.fromOverride=null; S.fromMarker?.remove(); S.fromMarker=null; closeSheet(); setRouteData([]); setTransitData(null); S.transit=null; destMarker?.remove(); stopMarkers.forEach(m=>m.remove()); S.dest=null; S.stops=[]; S.routes=[]; $("q").value=""; $("clearQ").hidden=true; }
 
 /* ---------------- sheet ---------------- */
 function openSheet(html){ S.view=""; const s=$("sheet"); s.innerHTML=html; s.scrollTop=0; s.classList.remove("closed"); requestAnimationFrame(()=>setSheetVar(sheetH())); }
@@ -1310,7 +1345,7 @@ async function loadTransit(force){
   const prev=S.transit;
   const T = (prev && prev.for===d && !force) ? prev : (S.transit={for:d, list:[], sel:-1, err:null, when:prev?.when||"now", at:prev?.at||"", drive:prev?.for===d?prev.drive:null});
   T.loading=true; T.err=null; renderTransitSheet();
-  const from=S.pos||{lat:map.getCenter().lat, lng:map.getCenter().lng};
+  const from=S.fromOverride||S.pos||{lat:map.getCenter().lat, lng:map.getCenter().lng};
   let time=null; if(T.when!=="now" && T.at){ time=new Date(T.at).getTime(); if(!isFinite(time)) time=null; }
   // a driving estimate to compare against, fetched alongside
   if(!T.drive) osrmRoutes(MODES.car.osrm, from, [], d).then(rs=>{ T.drive=rs[0]; if(S.transit===T && !T.loading) renderTransitSheet(); }).catch(()=>{});
@@ -1370,7 +1405,7 @@ function itinSteps(it){
   let h='<ol class="tsteps">';
   it.legs.forEach(l=>{ const k=legKind(l), mins=Math.max(1,Math.round((l.duration||0)/60));
     if(k==="walk"){ if((l.duration||0)<45) return;
-      h+='<li class="walk"><i style="--lc:var(--surface-2);background:var(--surface-2);color:var(--fg)">🚶</i><span class="tx"><b>Walk '+mins+' min</b><span>'+(l.distance?fmtDist(l.distance)+' · ':'')+'to '+esc(l.to.name==="END"?S.dest.name:l.to.name)+'</span>'+
+      h+='<li class="walk"><i style="--lc:var(--surface-2);background:var(--surface-2);color:var(--fg)">🚶</i><span class="tx"><b>Walk '+mins+' min</b><span>'+(l.distance?fmtDist(l.distance)+' · ':'')+'to '+esc(l.to.name==="END"?destName():l.to.name)+'</span>'+
         ((l.duration||0)>=90?'<button class="btn sm" data-walkleg="'+it.legs.indexOf(l)+'" style="align-self:flex-start;margin-top:6px">📷 Show the way with photos</button>':'')+'</span></li>'; return; }
     if(k==="car"){ h+='<li style="--lc:'+KIND_COL.car+'"><i>🚗</i><span class="tx"><b>Drive '+mins+' min</b><span>to '+esc(l.to.name)+' and park</span></span></li>'; return; }
     const col=lineColor(l), nm=[l.routeShortName||l.displayName, l.routeLongName].filter(Boolean).join(" · ")||k.toUpperCase();
@@ -2071,6 +2106,176 @@ function walkHint(nxt, toMan){
   showPrompt('<span class="tour-card">'+(cp.photo?'<img src="'+esc(cp.photo.url)+'" alt="" style="width:84px;height:60px">':'<span class="ae">📷</span>')+'<span class="at">'+esc(cp.text)+(cp.landmark?'<br><small style="font-weight:600;opacity:.75">Look for '+esc(cp.landmark)+' '+cp.lmSide+'</small>':'')+'</span></span><button data-a="ok">OK</button>', {ok:()=>{}}, 12000);
 }
 
+/* ======================= trip planner (A → B) ======================= */
+function destName(){ return (S.dest||S.tp?.res?.to||{name:"your destination"}).name; }
+function localDT(ms){ const d=new Date(ms); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16); }
+const isoZ = ms => new Date(ms).toISOString().replace(/\.\d{3}Z$/,"Z");
+function myLoc(){ return S.pos ? {name:"My location", lat:S.pos.lat, lng:S.pos.lng, me:true} : null; }
+function openTripPlanner(pre){
+  const P = S.tp = Object.assign({from:null, to:null, when:"now", at:""}, S.tp&&!pre?S.tp:{}, pre||{});
+  if(P.to && P.to.name==="My location") P.to=null;
+  let h='<div class="grab"></div><div class="hd"><h2>🗓️ Plan a trip</h2><p>Compare driving, public transport, motorcycle, cycling and walking, for now or later</p></div>'+
+    '<div class="tpf"><div class="tpin"><span class="dot a">A</span><input id="tpFrom" placeholder="📍 My location" autocomplete="off" value="'+esc(P.from?P.from.name:"")+'"></div>'+
+    '<button class="tpswap" id="tpSwap" aria-label="Swap start and destination">⇅</button>'+
+    '<div class="tpin"><span class="dot b">B</span><input id="tpTo" placeholder="Where to?" autocomplete="off" value="'+esc(P.to?P.to.name:"")+'"></div>'+
+    '<div class="tpsug" id="tpSug" hidden></div></div>'+
+    '<div class="trbar"><select id="tpWhen" aria-label="When"><option value="now">Leave now</option><option value="depart">Depart at</option><option value="arrive">Arrive by</option></select>'+
+    '<input id="tpAt" type="datetime-local" aria-label="Date and time"'+(P.when==="now"?' hidden':'')+'></div>'+
+    '<button class="btn go" id="tpGo" style="width:100%">Compare routes</button><div id="tpRes"></div>'+
+    '<div class="row"><button class="btn" id="tpClose">Close</button></div>';
+  openSheet(h);
+  $("tpWhen").value=P.when; if(!P.at){ const d=new Date(Date.now()+60*60000); d.setMinutes(Math.ceil(d.getMinutes()/15)*15,0,0); P.at=localDT(d.getTime()); } $("tpAt").value=P.at;
+  $("tpWhen").onchange=e=>{ P.when=e.target.value; $("tpAt").hidden=P.when==="now"; if(P.res) runPlanner(); };
+  $("tpAt").onchange=e=>{ P.at=e.target.value; if(P.res) runPlanner(); };
+  $("tpSwap").onclick=()=>{ const a=P.from||myLoc(), b=P.to; P.from=b&&!b.me?b:null; P.to=a&&!a.me?a:(a||null); if(P.to&&P.to.me) P.to=null;
+    $("tpFrom").value=P.from?P.from.name:""; $("tpTo").value=P.to?P.to.name:""; if(P.to) runPlanner(); };
+  $("tpGo").onclick=()=>runPlanner();
+  $("tpClose").onclick=()=>{ S.tp=null; afterSheet(); };
+  ["tpFrom","tpTo"].forEach(id=>{ const inp=$(id), which=id==="tpFrom"?"from":"to"; let t;
+    inp.onfocus=()=>tpSuggest(which, inp.value.trim());
+    inp.oninput=()=>{ clearTimeout(t); const v=inp.value.trim(); if(!v){ P[which]=null; } t=setTimeout(()=>tpSuggest(which,v),350); };
+    inp.onkeydown=e=>{ if(e.key==="Enter"){ clearTimeout(t); tpSuggest(which, inp.value.trim(), true); } }; });
+  if(P.auto && P.to){ P.auto=false; runPlanner(); }
+  else if(P.res) paintPlanner();
+}
+async function tpSuggest(which, v, pickFirst){
+  const P=S.tp, box=$("tpSug"); if(!box) return;
+  let list=[];
+  if(!v || v.length<3){
+    const me=myLoc(); if(which==="from" && me) list.push({...me, sub:"Use where you are now", ico:"📍"});
+    ["home","work"].forEach(k=>{ if(S.saved[k]) list.push({...S.saved[k], ico:k==="home"?"🏠":"🏢"}); });
+    S.recent.forEach(r=>list.push({...r, ico:"🕘"}));
+  } else { list=(await searchPlaces(v)||[]).map(r=>({...r, ico:"📍"})); }
+  if(S.tp!==P || !$("tpSug")) return;
+  if(pickFirst && list.length){ tpPick(which, list[0]); return; }
+  box.innerHTML = list.length ? list.slice(0,7).map((r,i)=>'<button data-tps="'+i+'"><span style="font-size:18px">'+r.ico+'</span><span style="min-width:0"><b>'+esc(r.name)+'</b><span>'+esc(r.sub||"")+'</span></span></button>').join("") : '<button disabled><span>No places found. Try another spelling.</span></button>';
+  box.hidden=false;
+  box.querySelectorAll("[data-tps]").forEach(b=>b.onmousedown=b.onclick=ev=>{ ev.preventDefault(); tpPick(which, list[+b.dataset.tps]); });
+}
+function tpPick(which, r){
+  const P=S.tp; P[which] = r.me ? null : {name:r.name, sub:r.sub||"", lat:r.lat, lng:r.lng};
+  if(which==="to" && r.me){ P.to=myLoc(); }
+  $(which==="from"?"tpFrom":"tpTo").value = r.me ? (which==="from"?"":"My location") : r.name;
+  $("tpSug").hidden=true; document.activeElement?.blur();
+  if(which==="from" && !P.to) $("tpTo").focus(); else if(P.to) runPlanner();
+}
+// TomTom: traffic-aware time for "now", or predicted traffic for a departure / arrival time
+async function ttTrip(from, to, mode, when, atMs){
+  if(!S.ttKey) return null;
+  let u=CFG.tomtom+"/routing/1/calculateRoute/"+from.lat.toFixed(6)+","+from.lng.toFixed(6)+":"+to.lat.toFixed(6)+","+to.lng.toFixed(6)+"/json?key="+encodeURIComponent(S.ttKey)+
+    "&traffic=true&computeTravelTimeFor=all&routeRepresentation=summaryOnly&travelMode="+(mode==="moto"?"motorcycle":"car");
+  if(when==="depart") u+="&departAt="+encodeURIComponent(isoZ(atMs)); else if(when==="arrive") u+="&arriveAt="+encodeURIComponent(isoZ(atMs));
+  try{ const j=await (await fetch(u)).json(); return j.routes?.[0]?.summary||null; }catch(e){ return null; }
+}
+function scaleByTraffic(list, sm){
+  if(!sm || !list) return false; const base=sm.noTrafficTravelTimeInSeconds||sm.travelTimeInSeconds, f=Math.min(4,Math.max(0.85,sm.travelTimeInSeconds/base));
+  list.forEach(r=>{ r.trafficDelay=Math.max(0,r.duration*(f-1)); r.duration*=f; r.eff=(r.eff||r.duration)*1; r.traffic=true; }); return true;
+}
+async function runPlanner(){
+  const P=S.tp; if(!P) return;
+  const from = P.from || myLoc() || (S.pos?null:{name:"Map centre", lat:map.getCenter().lat, lng:map.getCenter().lng});
+  if(!P.to){ toast("Choose where you're going (B)."); $("tpTo")?.focus(); return; }
+  if(!from){ toast("Choose a starting point (A)."); return; }
+  if(hav(from,P.to)<30){ toast("A and B are the same place."); return; }
+  const atMs = P.when==="now" ? Date.now() : new Date(P.at).getTime();
+  if(P.when!=="now" && !isFinite(atMs)){ toast("Pick a date and time."); return; }
+  P.res={loading:true}; P.fromUsed=from; paintPlanner();
+  const straight=hav(from,P.to)/1000, res={};
+  const tasks=[
+    osrmRoutes(MODES.car.osrm, from, [], P.to).then(async list=>{ list.forEach(r=>{ r.alerts=[]; r.penalty=0; r.eff=r.duration; });
+      const sm=await ttTrip(from,P.to,"car",P.when,atMs); scaleByTraffic(list, sm);
+      list.forEach(r=>r.eff=r.duration); list.sort((a,b)=>a.eff-b.eff); res.car=list; }).catch(()=>{}),
+    valhallaRoutes(from, [], P.to, "motorcycle").then(async list=>{ const sm=await ttTrip(from,P.to,"moto",P.when,atMs); scaleByTraffic(list, sm); res.moto=list[0]; }).catch(()=>{}),
+    transitFetch(from, P.to, {time:P.when==="now"?null:atMs, arriveBy:P.when==="arrive"}).then(j=>{
+      const its=(j.itineraries||[]).filter(it=>it.legs&&it.legs.some(l=>!["WALK","CAR","CAR_PARKING"].includes(l.mode)));
+      its.forEach(it=>it.info=itinInfo(it)); if(its.length) res.transit={its, best:its[bestIndex(its)]}; }).catch(()=>{}),
+  ];
+  if(straight<6) tasks.push(osrmRoutes(MODES.foot.osrm, from, [], P.to).then(l=>{ res.foot=l[0]; }).catch(()=>{}));
+  if(straight<25) tasks.push(osrmRoutes(MODES.bike.osrm, from, [], P.to).then(l=>{ res.bike=l[0]; }).catch(()=>{}));
+  await Promise.all(tasks);
+  if(S.tp!==P) return;
+  // build comparable options with depart / arrive times
+  const opts=[], when=P.when, timesFor=dur=>{ if(when==="arrive") return {depart:atMs-dur*1000, arrive:atMs}; const d=when==="now"?Date.now():atMs; return {depart:d, arrive:d+dur*1000}; };
+  if(res.car&&res.car[0]){ const r=res.car[0]; opts.push({key:"car", ico:"🚗", label:"Drive", dur:r.duration, dist:r.distance, ...timesFor(r.duration),
+    via:r.via.join(", ")||"local roads", toll:r.toll, traffic:r.traffic, delay:r.trafficDelay||0, score:r.duration/60+8, alts:res.car}); }
+  if(res.moto){ const r=res.moto; opts.push({key:"moto", ico:"🏍️", label:"Motorcycle", dur:r.duration, dist:r.distance, ...timesFor(r.duration), via:r.via.join(", ")||"local roads", toll:r.toll, traffic:r.traffic, score:r.duration/60+4}); }
+  if(res.transit){ const it=res.transit.best, f=it.info; let km=0; it.legs.forEach(l=>km+=legKm(l));
+    opts.push({key:"transit", ico:"🚇", label:"Public transport", dur:it.duration, dist:km*1000, depart:tms(it.startTime), arrive:tms(it.endTime), it, fare:f.fare,
+      chips:it.legs.map(legChip).filter(Boolean).join('<span class="legsep">›</span>'), changes:f.changes, walkMin:f.walkMin,
+      score:it.duration/60+f.changes*5+f.walkMin*0.4+f.fare*1.5-(S.appMode==="tourist"?5:0)}); }
+  if(res.bike && res.bike.duration<75*60) opts.push({key:"bike", ico:"🚲", label:"Bicycle", dur:res.bike.duration, dist:res.bike.distance, ...timesFor(res.bike.duration), via:res.bike.via.join(", ")||"", score:res.bike.duration/60*1.25+(res.bike.duration>40*60?15:0)});
+  if(res.foot && res.foot.duration<90*60) opts.push({key:"foot", ico:"🚶", label:"Walk", dur:res.foot.duration, dist:res.foot.distance, ...timesFor(res.foot.duration), via:res.foot.via.join(", ")||"", score:res.foot.duration/60*(res.foot.duration>20*60?1.6:1)});
+  if(!opts.length){ P.res={err:"Couldn't plan this trip right now. Check your connection and try again."}; paintPlanner(); return; }
+  const fastest=opts.reduce((a,b)=>a.dur<=b.dur?a:b), rec=opts.reduce((a,b)=>a.score<=b.score?a:b);
+  opts.forEach(o=>{ o.fastest=o===fastest; o.rec=o===rec; });
+  opts.sort((a,b)=>(b.rec-a.rec)||a.dur-b.dur);
+  const car=opts.find(o=>o.key==="car");
+  let why = rec.fastest ? "The fastest way"+(opts.length>1?", "+fmtDur(Math.max(0,(opts.filter(o=>o!==rec).reduce((a,b)=>a.dur<=b.dur?a:b).dur-rec.dur)))+" quicker than the next option":"")+"." :
+    rec.key==="transit" ? (car?"Only "+fmtDur(Math.max(60,rec.dur-car.dur))+" slower than driving, with no parking or tolls":"No parking or tolls")+" · fare ≈ RM"+rec.fare.toFixed(2)+"." :
+    rec.key==="foot" ? "A short walk: no waiting, parking or fares." :
+    rec.key==="bike" ? "A short ride: free and avoids traffic." :
+    rec.key==="moto" ? "Quicker than a car once parking is counted." : "Best balance of time and effort.";
+  if(rec.key==="car" && rec.toll) why+=" Uses toll roads.";
+  if((rec.key==="car"||rec.key==="moto") && !rec.traffic) why+=" Times are typical traffic"+(S.ttKey?"":"; add a TomTom key in Settings for live and predicted traffic")+".";
+  P.res={opts, rec, why, from, to:P.to, open:rec.key};
+  paintPlanner();
+}
+function paintPlanner(){
+  const P=S.tp, box=$("tpRes"); if(!P||!box) return;
+  const r=P.res; if(!r){ box.innerHTML=""; return; }
+  if(r.loading){ box.innerHTML='<p class="hint">Comparing routes for driving, public transport, motorcycle, cycling and walking…</p>'; return; }
+  if(r.err){ box.innerHTML='<p class="hint">'+esc(r.err)+'</p>'; return; }
+  const rec=r.rec, timeLine=o=> P.when==="arrive" ? "Leave by "+clock12(o.depart)+" · arrive "+clock12(o.arrive) : clock12(o.depart)+" → "+clock12(o.arrive);
+  let h='<div class="tpsum"><div class="ab">🟢 '+esc(r.from.name)+' → 🔴 '+esc(r.to.name)+'</div>'+
+    '<div class="rec">Recommended · '+rec.ico+' '+rec.label+'</div>'+
+    '<div class="big">'+(P.when==="arrive"?'Leave by '+clock12(rec.depart):'ETA '+clock12(rec.arrive))+' · '+fmtDur(rec.dur)+' · '+fmtDist(rec.dist)+'</div>'+
+    '<div class="why">'+esc(r.why)+'</div></div><div class="routes">';
+  r.opts.forEach((o,i)=>{
+    const tags=(o.rec?'<span class="tag best">Recommended</span>':'')+(o.fastest&&!o.rec?'<span class="tag best">Fastest</span>':'')+(o.toll?'<span class="tag toll">Toll</span>':'')+
+      (o.traffic?(o.delay>120?'<span class="tag traffic">+'+Math.round(o.delay/60)+' min traffic</span>':'<span class="tag flow">Traffic checked</span>'):'')+
+      (o.fare!=null?'<span class="tag cheap">≈ RM'+o.fare.toFixed(2)+'</span>':'');
+    h+='<button class="mc'+(o.rec?' rec':'')+'" data-mc="'+i+'"><span class="mi">'+o.ico+'</span><span class="t">'+fmtDur(o.dur)+'</span><span class="d">'+fmtDist(o.dist)+'</span>'+
+      '<span class="ln"><b>'+o.label+'</b> · '+timeLine(o)+'</span><span class="ln">'+tags+(o.chips?'':(o.via?'via '+esc(o.via):''))+(o.changes!=null?(o.changes?o.changes+' change'+(o.changes>1?'s':''):'direct')+' · walk '+o.walkMin+' min':'')+'</span>'+
+      (o.chips?'<span class="ln legs1">'+o.chips+'</span>':'')+'</button>';
+    if(r.open===o.key){
+      h+='<div class="mcx">';
+      if(o.alts && o.alts.length>1){ h+='<b style="font-size:13px">Route options</b>'; o.alts.forEach((a,k)=>{ h+='<div class="alt"><span>'+(k===0?'⭐ ':'')+'via '+esc(a.via.join(", ")||"local roads")+(a.toll?' · toll':'')+'</span><span><b>'+fmtDur(a.duration)+'</b> · '+fmtDist(a.distance)+'</span></div>'; }); }
+      if(o.it) h+=itinSteps(o.it);
+      h+='<div class="row" style="margin-top:4px"><button class="btn sm" data-mshow="'+o.key+'">🗺️ Show on map</button><button class="btn sm" data-mrem="'+i+'">🕒 Remind me</button>'+
+        '<a class="btn sm" target="_blank" rel="noopener" style="text-decoration:none;color:inherit" href="'+esc(calLink(o))+'">📅 Calendar</a><button class="btn sm" data-mshare="'+i+'">Share</button></div></div>';
+    }
+  });
+  h+='</div><p class="hint">'+(S.ttKey?'Car and motorcycle times use TomTom traffic'+(P.when==="now"?'':' predicted for that time')+'. ':'Car and motorcycle times are typical traffic. ')+'Public transport uses timetables; fares are estimates. The recommendation weighs time, changes, walking, fares and parking.</p>';
+  box.innerHTML=h;
+  box.querySelectorAll("[data-mc]").forEach(b=>b.onclick=()=>{ const o=r.opts[+b.dataset.mc]; r.open = r.open===o.key ? null : o.key; paintPlanner(); });
+  box.querySelectorAll("[data-mshow]").forEach(b=>b.onclick=()=>showPlannedOnMap(b.dataset.mshow));
+  box.querySelectorAll("[data-mrem]").forEach(b=>b.onclick=()=>remindPlanned(r.opts[+b.dataset.mrem]));
+  box.querySelectorAll("[data-mshare]").forEach(b=>b.onclick=()=>sharePlanned(r.opts[+b.dataset.mshare]));
+}
+function calLink(o){ const r=S.tp.res;
+  return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent((o.key==="transit"?"Trip to ":"Drive to ")+r.to.name)+
+    "&dates="+gcalStamp(o.depart)+"/"+gcalStamp(o.arrive)+"&details="+encodeURIComponent(o.label+" from "+r.from.name+": leave "+clock12(o.depart)+", arrive "+clock12(o.arrive)+" ("+fmtDur(o.dur)+", "+fmtDist(o.dist)+"). Open Panduan to navigate.")+
+    "&location="+encodeURIComponent(r.to.lat.toFixed(6)+","+r.to.lng.toFixed(6)); }
+async function remindPlanned(o){ const r=S.tp.res;
+  S.plans=[...S.plans.filter(p=>p.arrive>Date.now()), {id:Date.now().toString(36), from:r.from.me?null:{name:r.from.name,lat:r.from.lat,lng:r.from.lng}, dest:{name:r.to.name, sub:r.to.sub||"", lat:r.to.lat, lng:r.to.lng}, leave:o.depart, arrive:o.arrive, mode:o.key}];
+  store.set("plans",S.plans);
+  try{ if("Notification" in window && Notification.permission==="default") await Notification.requestPermission(); }catch(e){}
+  toast("Saved. I'll remind you 10 minutes before "+dayTime(o.depart)+". Find it under Planned drives in search.");
+}
+async function sharePlanned(o){ const r=S.tp.res;
+  const text="Trip plan: "+r.from.name+" → "+r.to.name+"\n"+o.ico+" "+o.label+": "+fmtDur(o.dur)+", "+fmtDist(o.dist)+"\nLeave "+dayTime(o.depart)+", arrive "+dayTime(o.arrive)+
+    (o.fare!=null?"\nFare ≈ RM"+o.fare.toFixed(2):"")+(o.via?"\nVia "+o.via:"");
+  try{ if(navigator.share){ await navigator.share({title:"Trip plan", text}); return; } }catch(e){ if(e.name==="AbortError") return; }
+  try{ await navigator.clipboard.writeText(text); toast("Trip plan copied."); }catch(e){ toast("Couldn't copy on this phone"); }
+}
+// open the chosen option in the normal route view, starting from A
+function showPlannedOnMap(key){
+  const P=S.tp, r=P.res;
+  S.fromOverride = r.from.me ? null : {name:r.from.name, lat:r.from.lat, lng:r.from.lng};
+  if(key==="transit"){ S.transit={for:null, list:[], when:P.when, at:P.when==="now"?"":P.at}; }
+  setTravelMode(key); setDest({name:r.to.name, sub:r.to.sub||"", lat:r.to.lat, lng:r.to.lng}, false);
+}
+
 /* ---------------- points (Waze-style) ---------------- */
 const LEVELS=[[0,"Learner"],[100,"Road Scout"],[500,"Traffic Hero"],[2000,"Highway Legend"],[10000,"Waveguide Royalty"]];
 function levelOf(p){ let l=LEVELS[0]; LEVELS.forEach(x=>{ if(p>=x[0]) l=x; }); return l; }
@@ -2161,9 +2366,10 @@ async function shareTrip(live){
 $("navShare").onclick=openShareSheet;
 $("sheet").addEventListener("click", e => {
   const b=e.target.closest("[data-walkleg]"); if(!b) return; e.stopPropagation();
-  const it = S.tnav ? S.R.it : S.transit?.list?.[S.transit.sel]; if(!it) return;
+  const inPlanner=!!b.closest("#tpRes");
+  const it = S.tnav ? S.R.it : inPlanner ? S.tp?.res?.opts?.find(o=>o.it)?.it : S.transit?.list?.[S.transit.sel]; if(!it) return;
   const l=it.legs[+b.dataset.walkleg]; if(!l) return;
-  openWalkGuide({coords:legCoords(l), title:"Walk to "+(l.to.name==="END"?S.dest.name:l.to.name), back: S.tnav ? closeSheet : renderTransitSheet});
+  openWalkGuide({coords:legCoords(l), title:"Walk to "+(l.to.name==="END"?destName():l.to.name), back: S.tnav ? closeSheet : inPlanner ? ()=>openTripPlanner() : renderTransitSheet});
 });
 $("navTour").onclick=()=>openTourSheet(S.R, null, closeSheet);
 $("navPhoto").onclick=()=>{
@@ -2373,6 +2579,8 @@ function paintVoice(){ $("voiceBtn").classList.toggle("on",S.voice); $("voiceWav
 $("voiceBtn").onclick=()=>{ S.voice=!S.voice; store.set("voice",S.voice); paintVoice(); toast(S.voice?"Voice on":"Voice muted"); if(S.voice) say(S.lang==="ms"?"Suara dihidupkan":S.lang==="zh"?"语音已开启":"Voice on"); };
 
 /* ---------------- boot ---------------- */
+// keep buttons and map padding in step with the sheet whenever its content changes height
+if("ResizeObserver" in window) new ResizeObserver(()=>{ if(!$("sheet").classList.contains("closed")) setSheetVar(sheetH()); }).observe($("sheet"));
 paintVoice(); renderChips(); paintTSwitch(); loadReports(); startGPS();
 setInterval(loadReports, 30000);
 setInterval(()=>{ if(S.ttKey) loadIncidents().then(()=>{ if(S.nav) buildProgress(); }); }, 300000);

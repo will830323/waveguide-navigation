@@ -39,6 +39,17 @@ A Waze- and Amap-style navigation app for Malaysia that installs on Android and 
 | **Step-by-step guidance**: walk to the stop → board → stops left → **"Get off at the next stop"** voice and vibration alert | Amap |
 | Driving time shown alongside for comparison | Jalan Nav |
 
+### Trip planner (A → B)
+| Feature | |
+|---|---|
+| **🗓️ Plan trip** chip, or 🕒 Plan on any route: choose any start **A** (or My location) and destination **B**, with search, Home/Work and recent places, plus ⇅ swap | |
+| **Leave now / Depart at / Arrive by** a date and time | Arrive by gives a **leave-by** time |
+| Compares **🚗 Drive, 🏍️ Motorcycle, 🚇 Public transport, 🚲 Bicycle, 🚶 Walk**, each with duration, distance, depart → arrive times, tolls, traffic and fare | Bicycle up to 25 km, walk up to 6 km |
+| **Recommended** option with the reason, e.g. "Only 9 min slower than driving, with no parking or tolls · fare ≈ RM2.00" | Weighs time, changes, walking, fares and parking |
+| Expand an option for the car **route alternatives** or the public transport steps, then 🗺️ Show on map (routes from A), 🕒 Remind me, 📅 Google Calendar, Share | |
+| With a TomTom key, car and motorcycle times use **predicted traffic for the chosen time** | |
+| Saved plans appear under **Planned drives** in search and reopen the planner | |
+
 ### Tourist / traveller mode
 Switch it on with the **🧳 Tourist mode** chip under the search bar, or in Settings → Mode. Normal mode keeps the everyday experience.
 | Feature | |
