@@ -7,8 +7,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Waveguide">
-<title>Waveguide</title>
+<meta name="apple-mobile-web-app-title" content="Panduan">
+<title>Panduan</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="logo-96.png" type="image/png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -72,7 +72,13 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--route);outline-
 
 /* ---------- floating buttons ---------- */
 .fabs{position:fixed;z-index:500;display:flex;flex-direction:column;gap:10px;transition:bottom .25s}
-#fabR{right:max(12px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + var(--sheet-h,0px) + 14px)}
+#fabR{right:max(10px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + var(--sheet-h,0px) + 14px);transition:opacity .3s,transform .3s}
+body:not(.navmode) .fab:not(.report){width:44px;height:44px}
+body:not(.navmode) .fab:not(.report) svg{width:21px;height:21px}
+body:not(.navmode) #fabR{gap:8px}
+body.navmode.calm #fabR .fab:not(#locBtn){opacity:0;transform:translateX(70px);pointer-events:none}
+body.navmode.calm #navLeft .pill:not(#lockPill):not(#voicePill){opacity:0;pointer-events:none}
+#navLeft .pill{transition:opacity .3s}
 .fab{width:52px;height:52px;border-radius:50%;background:var(--surface);color:var(--fg);box-shadow:var(--shadow);display:grid;place-items:center;font:700 13px var(--f-display);letter-spacing:.04em}
 .fab svg{width:24px;height:24px}
 .fab.on{color:var(--route)}
@@ -130,7 +136,6 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--route);outline-
 .mtsw{width:100%;aspect-ratio:1;max-width:72px;border-radius:12px;display:grid;place-items:center;font-size:26px}
 .mt-street{background:linear-gradient(135deg,#e2f0fc 55%,#8fc3ee 55%)}
 .mt-landmark{background:linear-gradient(135deg,#eef5fb 55%,#cfe8c4 55%)}
-.mt-satellite{background:linear-gradient(135deg,#3b5a3a,#6b7f52 50%,#1d3a5a)}
 .mt-dark{background:linear-gradient(135deg,#16223a 55%,#0b1322 55%)}
 /* lists (fuel, settings) */
 .list{display:flex;flex-direction:column}
@@ -371,6 +376,17 @@ body.navmode .navonly[hidden]{display:none!important}
 .mcx .alt:first-child{border-top:0}
 .frompin{width:26px;height:26px;border-radius:50%;background:#14a86a;color:#fff;border:3px solid #fff;display:grid;place-items:center;font:700 12px var(--f-display);box-shadow:0 2px 6px rgba(0,0,0,.4)}
 
+/* driving-safety lock */
+body.locked #alert button{display:none}
+.lockpill{background:var(--panel);color:var(--panel-ink)}
+.lockpill .pi{background:#ffd23f!important;color:#2b1f00!important}
+.legal{position:fixed;inset:0;z-index:990;background:rgba(5,20,18,.55);display:flex;align-items:flex-end;justify-content:center;padding:0 max(0px,env(safe-area-inset-right,0px)) 0 max(0px,env(safe-area-inset-left,0px))}
+.legal .card{width:100%;max-width:560px;max-height:88vh;overflow-y:auto;background:var(--surface);color:var(--fg);border-radius:24px 24px 0 0;padding:22px 20px calc(env(safe-area-inset-bottom,0px) + 18px)}
+.legal h2{margin:0 0 4px;font:700 24px/1.15 var(--f-display)}
+.legal ul{margin:10px 0;padding-left:20px;display:flex;flex-direction:column;gap:7px;font-size:14.5px}
+.legal .big{font-size:44px;line-height:1}
+.legal a{color:var(--route)}
+
 /* ---------- markers ---------- */
 .me{width:56px;height:56px;position:relative}
 .me::before{content:"";position:absolute;inset:6px;border-radius:50%;background:rgba(30,224,140,.35);animation:mepulse 2s ease-out infinite}
@@ -448,6 +464,8 @@ body.navmode .navonly[hidden]{display:none!important}
 </div>
 <div id="prog" hidden><span id="progFlag">🏁</span><div id="progDone"></div><div id="progMarks"></div><div id="progCar"></div></div>
 <div id="navLeft" hidden>
+  <button class="pill lockpill" id="lockPill" hidden><span class="pi">🔒</span>Passenger? Unlock</button>
+  <button class="pill" id="voicePill" hidden><span class="pi">🎤</span>Say a command</button>
   <button class="pill rep" id="navReport"><span class="pi"><svg viewBox="0 0 24 24"><path d="M12 3L2 20h20z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><path d="M12 9.5v4.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="17" r="1.4" fill="currentColor"/></svg></span>Report</button>
   <button class="pill" id="navTour" hidden><span class="pi">🧳</span>Along route</button>
   <button class="pill" id="navPhoto" hidden><span class="pi">📷</span>Photos</button>
@@ -481,7 +499,7 @@ body.navmode .navonly[hidden]{display:none!important}
 <script>
 "use strict";
 /* =====================================================================
-   Waveguide — Waze-style navigation as an installable web app.
+   Panduan — community navigation for Malaysia, as an installable web app.
    Free, keyless services: OpenFreeMap (vector map), OSRM (routing),
    Photon (search), Overpass (speed limits, petrol stations).
    Optional: Firebase Realtime Database URL for shared community reports.
@@ -516,7 +534,7 @@ const QUICK = [
 ];
 // ttl: minutes before a report expires. delay: minutes added to a route that passes it.
 const HZ = {
-  police:  {e:"👮", en:"Police",         ms:"Polis",          zh:"警察",   ttl:60,    delay:0},
+  police:  {e:"👮", en:"Police presence (safety)", ms:"Kehadiran polis (keselamatan)", zh:"警察执勤（安全）", ttl:60, delay:0, v:{en:"Police presence", ms:"Kehadiran polis", zh:"警察执勤"}},
   accident:{e:"💥", en:"Accident",       ms:"Kemalangan",     zh:"车祸",   ttl:120,   delay:8},
   jam:     {e:"🚗", en:"Traffic jam",    ms:"Kesesakan",      zh:"塞车",   ttl:60,    delay:6},
   flood:   {e:"🌊", en:"Flood",          ms:"Banjir",         zh:"水灾",   ttl:360,   delay:15},
@@ -612,20 +630,13 @@ const hzName = k => HZ[k][S.lang] || HZ[k].en;
 
 /* ---------------- map types ---------------- */
 // street = OpenFreeMap Liberty recoloured light blue · landmark = OpenFreeMap Bright (dense place icons)
-// satellite = Esri World Imagery + place/road labels · dark = OpenFreeMap Dark
+// dark = OpenFreeMap Dark. (Satellite imagery was removed: its tile terms need a commercial licence.)
 const MAPTYPES = {
   street:   {label:"Light blue", ico:"🗺️", ui:"day"},
   landmark: {label:"Landmarks",  ico:"🏛️", ui:"day"},
-  satellite:{label:"Satellite",  ico:"🛰️", ui:"night"},
   dark:     {label:"Dark",       ico:"🌙", ui:"night"},
 };
-const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/";
-function satStyle(){ return {version:8, sources:{
-    img:{type:"raster", tiles:[ESRI+"World_Imagery/MapServer/tile/{z}/{y}/{x}"], tileSize:256, maxzoom:19, attribution:"Imagery © Esri, Maxar, Earthstar Geographics"},
-    roads:{type:"raster", tiles:[ESRI+"Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}"], tileSize:256, maxzoom:19},
-    places:{type:"raster", tiles:[ESRI+"Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"], tileSize:256, maxzoom:19}},
-  layers:[{id:"img",type:"raster",source:"img"},{id:"roads",type:"raster",source:"roads",paint:{"raster-opacity":.9}},{id:"places",type:"raster",source:"places"}]}; }
-function styleFor(t){ return t==="satellite" ? satStyle() : t==="landmark" ? CFG.styleLandmark : t==="dark" ? CFG.styleNight : CFG.styleDay; }
+function styleFor(t){ return t==="landmark" ? CFG.styleLandmark : t==="dark" ? CFG.styleNight : CFG.styleDay; }
 function applyTheme(){ document.documentElement.dataset.theme = (MAPTYPES[S.mapType]||MAPTYPES.street).ui; }
 if(!MAPTYPES[S.mapType]) S.mapType="street";
 applyTheme();
@@ -649,7 +660,7 @@ function scaleNum(v,k){
   return v;
 }
 function tintMap(){
-  if(S.mapType==="satellite" || S.mapType==="dark") return;
+  if(S.mapType==="dark") return;
   const paint=(id,prop,val)=>{ try{ map.setPaintProperty(id,prop,val); }catch(e){} };
   const layout=(id,prop,val)=>{ try{ map.setLayoutProperty(id,prop,val); }catch(e){} };
   const blue = S.mapType==="street";
@@ -716,7 +727,7 @@ function addRouteLayers(){
 }
 function addTrafficLayer(){
   if(!S.ttKey || !S.traffic || map.getSource("ttflow")) return;
-  const dark = S.mapType==="dark" || S.mapType==="satellite";
+  const dark = S.mapType==="dark";
   map.addSource("ttflow",{type:"raster", tileSize:256, maxzoom:22, attribution:"Traffic © TomTom",
     tiles:[CFG.tomtom+"/traffic/map/4/tile/flow/"+(dark?"relative0-dark":"relative0")+"/{z}/{x}/{y}.png?key="+encodeURIComponent(S.ttKey)+"&tileSize=256"]});
   const before = map.getLayer("alt-line") ? "alt-line" : map.getStyle().layers.find(l=>l.type==="symbol")?.id;
@@ -729,6 +740,7 @@ function setRouteData(features){ const src=map.getSource("routes"); if(src) src.
 // user moves the map → stop following
 map.on("dragstart", e => { if(e.originalEvent){ S.follow=false; S.dragAt=Date.now(); $("locBtn").classList.remove("on"); } });
 map.on("zoomstart", e => { if(e.originalEvent) S.dragAt=Date.now(); });
+map.on("zoomend", e => { if(e.originalEvent && (S.nav||S.tnav)){ const kmh=(S.speed||0)*3.6, base=kmh>90?14.3:kmh>60?14.9:kmh>30?15.5:16; S.zoomAdj=Math.max(-3,Math.min(2,map.getZoom()-base)); } });
 map.on("rotate", () => { $("compass").querySelector("svg").style.transform="rotate("+(-map.getBearing())+"deg)"; });
 // long-press / right-click drops a pin
 map.on("contextmenu", e => dropPin(e.lngLat));
@@ -767,12 +779,13 @@ function onPos(p, heading, speed){
   meMarker.setRotation(S.heading);
   if(!S.gotFix){ S.gotFix=true; if(!S.dest) map.jumpTo({center:ll(p), zoom:15, padding:camPad()}); }
   const kmh = S.speed*3.6;
+  updateLock(kmh);
   $("speedo").hidden = !(S.nav || (kmh>5 && !S.tnav && S.mode!=="transit"));
   $("spd").textContent = Math.round(kmh);
   if(S.hud) paintHud();
   checkSpeed(kmh);
   if(motorised() && (S.nav || kmh>5)) speedLimit(p);
-  // after you pan or zoom the map while navigating, snap back to your position 10 seconds later (Waze-style)
+  // after you pan or zoom the map while navigating, snap back to your position 10 seconds later 
   if((S.nav||S.tnav) && !S.follow && Date.now()-S.dragAt>10000 && $("sheet").classList.contains("closed")){ S.follow=true; $("locBtn").classList.add("on"); }
   if(S.tnav){ transitTick(p); if(S.follow) followCam(p, kmh); }
   else if(S.nav){ navTick(p); if(S.follow) followCam(p, kmh); }
@@ -786,7 +799,9 @@ function camPad(){
   return {top:Math.round(top+8), bottom:Math.round(bottom+8), left:0, right:0};
 }
 function followCam(p, kmh){
-  const zoom = kmh>90?15.6 : kmh>60?16.2 : kmh>30?16.8 : 17.3;
+  // wider view: about 1.3 zoom levels further out than before, so more road ahead is visible
+  const base = kmh>90?14.3 : kmh>60?14.9 : kmh>30?15.5 : 16;
+  const zoom = Math.max(12, Math.min(18, base + (S.zoomAdj||0)));
   map.easeTo({center:ll(p), zoom, bearing:S.headUp?S.heading:0, pitch:(S.tilt||S.headUp)?52:0,
     padding:camPad(), duration:S.sim?480:950, easing:t=>t});
 }
@@ -977,7 +992,7 @@ function prep(r){
 function minDistToRoute(R,p){ let best=1e12; const step=R.pts.length>4000?2:1;
   for(let i=0;i<R.pts.length-1;i+=step){ const d=segProj(p,R.pts[i],R.pts[Math.min(i+step,R.pts.length-1)]).d; if(d<best) best=d; } return best; }
 function allHazards(withCams){ return [...S.reports, ...S.incidents, ...(withCams && S.R && S.R.cams ? S.R.cams : [])]; }
-// Waze-style: reports on a route add delay, and the best route is chosen on adjusted time.
+// Reports on a route add delay, and the best route is chosen on adjusted time.
 function scoreRoutes(list){
   list = list || S.routes;
   list.forEach(r => {
@@ -1193,7 +1208,7 @@ function buildProgress(){
 function paintProgress(along){ const R=S.R, total=R.cum[R.cum.length-1]||1, f=Math.min(1,Math.max(0,along/total)); setPassed(f);
   $("progDone").style.height=(f*100)+"%"; $("progCar").style.bottom=(f*100)+"%"; }
 
-/* ---------------- faster route found (Waze) ---------------- */
+/* ---------------- faster route found ---------------- */
 async function checkBetter(p, leftSec, remain){
   try{
     const rs=scoreRoutes(await fetchRoutes(p,S.stops,S.dest)), best=rs[0];
@@ -1202,9 +1217,13 @@ async function checkBetter(p, leftSec, remain){
   }catch(e){}
 }
 function offerBetter(best, mins){
-  say(L().faster(mins));
+  S.betterPending={best, until:Date.now()+20000};
+  say(L().faster(mins)+(S.lockOn?(S.lang==="ms"?". Sebut: ambil laluan pantas.":S.lang==="zh"?"。请说：切换路线。":". Say: take faster route."):""));
   showPrompt('<span class="ae">⚡</span><span class="at">Faster route · saves '+mins+' min</span><button data-a="yes">Switch</button><button data-a="no">Keep</button>',
-    {yes:()=>{ S.R=best; S.lastIdx=0; S.spoken={}; drawNavRoute(); buildProgress(); routeExtras(best).then(buildProgress); say(L().switched); }, no:()=>{}}, 15000);
+    {yes:()=>takeBetter(), no:()=>{ S.betterPending=null; }}, 15000);
+}
+function takeBetter(){ const b=S.betterPending; if(!b || Date.now()>b.until || !S.nav) return false; S.betterPending=null;
+  S.R=b.best; S.lastIdx=0; S.spoken={}; drawNavRoute(); buildProgress(); routeExtras(b.best).then(buildProgress); say(L().switched); return true;
 }
 // one shared prompt slot in the alert banner
 function showPrompt(html, actions, ms){
@@ -1397,7 +1416,7 @@ function renderTransitSheet(){
   if(T.sel>=0) h+='<div class="row"><button class="btn go" id="trGo">GO</button><button class="btn" id="trSim">Test ride</button></div>'+
     '<div class="row"><button class="btn sm" id="trRemind">🕒 Remind me</button><button class="btn sm" id="trShare">Share</button><button class="btn sm" id="trRetry">Refresh times</button><button class="btn sm" id="closeBtn">Close</button></div>';
   else h+='<div class="row"><button class="btn sm" id="closeBtn">Close</button></div>';
-  h+='<p class="hint">Fares are estimates for adults paying by Touch \'n Go card or e-wallet; students, seniors and OKU pay about half on Rapid KL. Timetables come from Transitous and may miss some routes. ● Live means real-time arrival data.</p>';
+  h+='<p class="hint">Fares are estimates for adults paying by Touch \'n Go card or e-wallet; students, seniors and OKU pay about half on Rapid KL. Timetables come from Transitous (<a href="https://transitous.org/sources/" target="_blank" rel="noopener">timetable sources</a>) and may miss some routes. ● Live means real-time arrival data.</p>';
   const sc=$("sheet").scrollTop; openSheet(h); S.view="transit"; if(T.keepScroll){ $("sheet").scrollTop=sc; T.keepScroll=false; }
   wireTransit();
 }
@@ -1483,7 +1502,7 @@ async function startTransitNav(it, sim){
   closeSheet(); $("top").hidden=true; $("navtop").hidden=false; $("tripbar").hidden=false; $("speedo").hidden=true; $("layersBtn").hidden=true;
   navChrome(true); $("navFuel").hidden=true; $("lanes").hidden=true; $("navThen").hidden=true; $("locBtn").classList.add("on"); setSheetVar(tripH());
   drawItin(it,false);
-  try{ S.wake=await navigator.wakeLock?.request("screen"); }catch(e){}
+  Awake.start(); S.zoomAdj=0;
   say(L().start);
   if(sim) startSim(); else if(S.pos) onPos(S.pos); else map.jumpTo({center:ll(S.R.pts[0]), zoom:16});
 }
@@ -1524,6 +1543,89 @@ function say(text){
 }
 if("speechSynthesis" in window) speechSynthesis.onvoiceschanged=()=>{};
 
+/* ---------------- driving-safety lock ----------------
+   Rule 17A, Road Traffic Rules 1959: drivers may not hold or operate a phone. Above ~10 km/h in a car or on a motorcycle,
+   typing and tap prompts are switched off and only voice commands, End, mute, re-centre and map view buttons work. */
+const LOCK_OK = "#endBtn,#voiceBtn,#locBtn,#tiltBtn,#dayBtn,#rerouteBtn,#lockPill,#voicePill,#micBtn,#micFab,#hudExit,#hudMirror,#spdBox,.legal,.legal *";
+function updateLock(kmh){
+  const drivingMode = !S.tnav && (S.mode==="car"||S.mode==="moto"), fast = kmh>10, slow = kmh<5;
+  if(!drivingMode || S.passenger || S.sim){ if(S.lockOn) setLock(false); return; }
+  if(fast){ S.slowSince=0; if(!S.lockOn) setLock(true); }
+  else if(slow && S.lockOn){ S.slowSince=S.slowSince||Date.now(); if(Date.now()-S.slowSince>3000) setLock(false); }
+}
+function setLock(on){
+  S.lockOn=on; document.body.classList.toggle("locked",on);
+  $("q").disabled=on; $("q").placeholder = on ? "Typing is off while driving · use 🎤" : (S.mode==="transit"?"Where to by bus or train?":"Where to?");
+  if(S.nav){ $("lockPill").hidden=!on; $("voicePill").hidden=!on||!SR; $("navReport").hidden=on; $("navFuel").hidden=on; $("navTour").hidden=on||S.appMode!=="tourist"; }
+  if(on){ if(document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) document.activeElement.blur();
+    if(!$("sheet").classList.contains("closed") && !S.sheetSafe) closeSheet(); }
+}
+let lockToastAt=0;
+function lockedTap(){ if(Date.now()-lockToastAt<4000) return; lockToastAt=Date.now(); navigator.vibrate?.(60);
+  if(!S.nav){ $("lockPill").onclick(); return; } // not navigating: offer the passenger unlock straight away
+  toast(SR ? "🔒 While driving, tap 🎤 and speak (e.g. \"report police\", \"find petrol\"). Passengers can unlock." : "🔒 Touch controls are off while driving. Passengers can unlock."); }
+document.addEventListener("click", e => {
+  if(!S.lockOn) return;
+  const t=e.target.closest("button,a,input,select,label,.npin,.hzpin,.friend,.man,.maplibregl-marker,.rc,.li,.chip"); if(!t) return;
+  if(t.closest(LOCK_OK)) return;
+  e.preventDefault(); e.stopPropagation(); lockedTap();
+}, true);
+document.addEventListener("focusin", e => { if(S.lockOn && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) && !e.target.closest(".legal")){ e.target.blur(); lockedTap(); } }, true);
+$("lockPill").onclick=()=>showLegal('<div class="big">🔒</div><h2>Are you a passenger?</h2><p class="hint" style="margin:6px 0 0">Unlock the screen for this trip only if someone other than the driver will use it. Drivers must not hold or operate a phone while driving.</p>'+
+  '<div class="row"><button class="btn" data-l="no">I\'m driving</button><button class="btn go" data-l="yes" style="font-size:16px">I\'m a passenger</button></div>',
+  {yes:()=>{ S.passenger=true; setLock(false); toast("Unlocked for this trip. Only passengers should use the screen."); }, no:()=>{}});
+$("voicePill").onclick=()=>listen();
+// a full-screen card for legal notices; buttons carry data-l actions
+function showLegal(html, actions){
+  const d=document.createElement("div"); d.className="legal"; d.setAttribute("role","dialog"); d.innerHTML='<div class="card">'+html+'</div>'; document.body.appendChild(d);
+  d.querySelectorAll("[data-l]").forEach(b=>b.onclick=()=>{ const f=actions[b.dataset.l]; d.remove(); f&&f(); });
+  return d;
+}
+// one-time warning before the first drive
+function safetyWarning(){
+  if(store.get("safeWarned",false) || !(S.mode==="car"||S.mode==="moto")) return;
+  showLegal('<div class="big">📱</div><h2>Mount your phone. Only passengers should tap.</h2>'+
+    '<ul><li>Put the phone in a holder before you drive. Malaysian law (Rule 17A, Road Traffic Rules 1959) bans holding or operating a phone while driving, even at traffic lights.</li>'+
+    '<li>Above 10 km/h, typing and tap prompts switch off. Use voice: tap 🎤 and say "report police", "find petrol", "take faster route" or "end navigation".</li>'+
+    '<li>Road signs, traffic lights and the police always come first. Routes, speed limits and cameras may be wrong.</li></ul>'+
+    '<div class="row"><button class="btn" data-l="pass">I\'m a passenger</button><button class="btn go" data-l="ok" style="font-size:16px">I\'m the driver · OK</button></div>',
+    {ok:()=>{ store.set("safeWarned",true); }, pass:()=>{ store.set("safeWarned",true); S.passenger=true; }});
+}
+// first launch: terms, privacy and why location is needed, before Android asks for the permission
+function legalGate(then){
+  if(store.get("termsOk","")==="2026-10-29"){ then(); return; }
+  showLegal('<div style="display:flex;align-items:center;gap:12px"><img src="logo-96.png" alt="" width="52" height="52" style="border-radius:14px"><div><h2>Welcome to Panduan</h2><span class="hint">Navigation for Malaysia</span></div></div>'+
+    '<ul><li><b>Your location</b> is used to show where you are, plan routes and give turn-by-turn guidance. To get results, your position and searches are sent to map, routing, search and timetable services (listed in the privacy policy). Panduan has no accounts, ads or tracking.</li>'+
+    '<li><b>Safety first.</b> Obey road signs and the law. Routes, times, speed limits, cameras, fares and photos may be wrong or out of date.</li>'+
+    '<li><b>Reports and live location</b> you choose to share are visible to other users.</li></ul>'+
+    '<p class="hint" style="margin:0">By continuing you agree to the <a href="terms.html" target="_blank" rel="noopener">Terms of use</a> and <a href="privacy.html" target="_blank" rel="noopener">Privacy policy</a>.</p>'+
+    '<div class="row"><button class="btn go" data-l="ok" style="width:100%;font-size:17px">Agree and continue</button></div>',
+    {ok:()=>{ store.set("termsOk","2026-10-29"); then(); }});
+}
+
+/* ---------------- keep the screen on while navigating ---------------- */
+const Awake = {
+  lock:null, video:null, on:false,
+  async start(){ this.on=true; await this.get(); this.fallback(); },
+  async get(){
+    if(!this.on || document.visibilityState!=="visible") return;
+    if(this.lock && !this.lock.released) return;
+    try{ this.lock = await navigator.wakeLock.request("screen"); this.lock.addEventListener("release", ()=>{ if(this.on) setTimeout(()=>this.get(), 500); }); }catch(e){ this.lock=null; }
+  },
+  // backup for phones where the wake lock is refused or dropped: a tiny muted looping video keeps the display awake
+  fallback(){
+    if(this.video) { this.video.play().catch(()=>{}); return; }
+    try{ const c=document.createElement("canvas"); c.width=c.height=2; const g=c.getContext("2d"); let n=0;
+      setInterval(()=>{ if(!this.on) return; g.fillStyle=(n++%2)?"#000":"#010101"; g.fillRect(0,0,2,2); }, 1000);
+      const v=document.createElement("video"); v.muted=true; v.playsInline=true; v.setAttribute("playsinline",""); v.loop=true;
+      v.style.cssText="position:fixed;width:1px;height:1px;opacity:0.01;pointer-events:none;left:0;top:0";
+      if(c.captureStream){ v.srcObject=c.captureStream(1); document.body.appendChild(v); v.play().catch(()=>{}); this.video=v; } }catch(e){}
+  },
+  stop(){ this.on=false; try{ this.lock?.release(); }catch(e){} this.lock=null; try{ this.video?.pause(); }catch(e){} },
+};
+document.addEventListener("visibilitychange", ()=>{ if(Awake.on && document.visibilityState==="visible"){ Awake.get(); Awake.video?.play().catch(()=>{}); } });
+setInterval(()=>{ if(Awake.on) Awake.get(); }, 20000);
+
 /* ---------------- navigation screen chrome ---------------- */
 function clock12(ms){ return new Date(ms).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"}).toLowerCase(); }
 function paintEta(arriveMs, secs, meters, note){
@@ -1532,8 +1634,12 @@ function paintEta(arriveMs, secs, meters, note){
   // keep the buttons clear of the card if its height changes
   if($("sheet").classList.contains("closed")){ const h=tripH(); if(h!==S.lastTripH){ S.lastTripH=h; setSheetVar(h); } }
 }
+// during navigation the side buttons hide after 6 s without a touch; tapping the map or the re-centre button brings them back
+let calmT;
+function wakeButtons(){ document.body.classList.remove("calm"); clearTimeout(calmT); if(document.body.classList.contains("navmode")) calmT=setTimeout(()=>document.body.classList.add("calm"), 6000); }
+["touchstart","mousedown"].forEach(ev=>document.addEventListener(ev, ()=>{ if(document.body.classList.contains("navmode")) wakeButtons(); }, {passive:true, capture:true}));
 function navChrome(on){
-  document.body.classList.toggle("navmode", on);
+  document.body.classList.toggle("navmode", on); if(on) wakeButtons(); else { clearTimeout(calmT); document.body.classList.remove("calm"); }
   $("navLeft").hidden=!on;
   if(on){ $("fabR").prepend($("speedo")); $("tDest").textContent=S.dest?.name||""; paintNavButtons(); $("tprogFill").style.width="0%"; }
   else document.body.insertBefore($("speedo"), $("sheet"));
@@ -1557,6 +1663,7 @@ $("navDetails").onclick=()=>$("manPanel").onclick();
 
 /* ---------------- navigation ---------------- */
 async function startNav(sim){
+  S.passenger=false; S.lockOn=false; if(!sim) safetyWarning();
   S.R=S.routes[S.sel]; S.nav=true; S.lastIdx=0; S.spoken={}; S.alerted={}; S.passed={}; S.follow=true; S.parkOffered=false;
   $("micFab").hidden=true; $("layersBtn").hidden=true;
   try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); actx.resume?.(); }catch(e){}
@@ -1567,15 +1674,16 @@ async function startNav(sim){
   if(S.mode==="foot") prepWalkGuide({coords:S.R.coords, steps:S.R.steps}).then(cps=>{ S.wgNav=cps; }).catch(()=>{});
   $("locBtn").classList.add("on"); setSheetVar(tripH());
   drawNavRoute();
-  try{ S.wake=await navigator.wakeLock?.request("screen"); }catch(e){}
+  Awake.start(); S.zoomAdj=0;
   say(L().start);
   if(sim) startSim(); else if(S.pos) onPos(S.pos);
-  else map.jumpTo({center:ll(S.R.pts[0]), zoom:17});
+  else map.jumpTo({center:ll(S.R.pts[0]), zoom:16});
 }
 function endNav(){
+  S.passenger=false; setLock(false);
   clearTourMarkers(); $("navTour").hidden=true; $("navPhoto").hidden=true; S.wgNav=null;
   const wasT=S.tnav; S.tnav=false; $("navFuel").hidden=false; if(wasT) setTransitData(null);
-  S.nav=false; stopSim(); try{ S.wake?.release(); }catch(e){} S.wake=null; if(Live.code) Live.stop(); if(S.hud) toggleHud(false);
+  S.nav=false; stopSim(); Awake.stop(); if(Live.code) Live.stop(); if(S.hud) toggleHud(false);
   $("micFab").hidden=true; $("layersBtn").hidden=false;
   $("navtop").hidden=true; $("tripbar").hidden=true; $("top").hidden=false; $("speedo").hidden=true; $("prog").hidden=true; $("lanes").hidden=true; navChrome(false);
   closeRoute(); setSheetVar(0);
@@ -1584,7 +1692,7 @@ function endNav(){
 }
 $("endBtn").onclick=endNav;
 $("manPanel").onclick=()=>{ if(S.tnav){ openSheet('<div class="grab"></div><div class="hd"><h2>Trip steps</h2><p>'+esc(S.dest?.name||"")+'</p></div>'+itinSteps(S.R.it)+'<div class="row"><button class="btn" id="cl">Back to the map</button></div>'); $("cl").onclick=()=>{ closeSheet(); S.follow=true; }; return; } directionsSheet(S.R,true); };
-document.addEventListener("visibilitychange", async () => { if(S.nav && document.visibilityState==="visible" && !S.wake){ try{ S.wake=await navigator.wakeLock?.request("screen"); }catch(e){} } });
+
 
 function nearest(R,p,from){
   const n=R.pts.length; let best={d:1e12,i:0,t:0};
@@ -1726,20 +1834,20 @@ function hazardCheck(p){
     const warnAt = r.type==="camera" ? 600 : 800;
     if(d<warnAt && ahead && d>25){ if(!shown||d<shown.d) shown={r,d};
       if(!S.alerted[r.id]){ S.alerted[r.id]=1; if(r.type==="camera"||r.type==="police") beep(1);
-        say(r.type==="camera" ? L().camAhead(r.limit) : L().ahead(hzName(r.type))); } }
+        say(r.type==="camera" ? L().camAhead(r.limit) : L().ahead(HZ[r.type].v?.[S.lang]||hzName(r.type))); } }
     else if(S.alerted[r.id] && !S.passed[r.id] && d<=40){ S.passed[r.id]=1; if(!r.src) askStillThere(r); }
   });
   const a=$("alert"); if(S.asking) return;
   if(shown){ a.hidden=false; a.innerHTML='<span class="ae">'+HZ[shown.r.type].e+'</span><span class="at">'+esc(hzName(shown.r.type))+(shown.r.limit?' · '+shown.r.limit+' km/h':'')+' · '+fmtDist(shown.d)+'</span>'; }
   else a.hidden=true;
 }
-// Waze's "Still there?" prompt as you pass a report.
+// "Still there?" prompt as you pass a report.
 function askStillThere(r){
   showPrompt('<span class="ae">'+HZ[r.type].e+'</span><span class="at">'+esc(hzName(r.type))+' — '+esc(L().stillThere)+'</span><button data-a="up">👍</button><button data-a="down">👎</button>',
     {up:()=>vote(r,true), down:()=>vote(r,false)}, 9000);
 }
 
-/* ---------------- nearby places (Amap-style categories) ---------------- */
+/* ---------------- nearby places by category ---------------- */
 const NEARBY = {
   fuel:    {ico:"⛽", label:"Petrol",          q:'["amenity"="fuel"]', r:8000},
   ev:      {ico:"🔌", label:"EV charging",     q:'["amenity"="charging_station"]', r:15000},
@@ -1792,9 +1900,11 @@ async function openPlaces(k, center, radius){
     list.forEach(f=>{ f.d=hav(c,f);
       if(S.nav && S.R && !center){ f.off=minDistToRoute(S.R,f); f.ahead=nearest(S.R,f,S.lastIdx).along >= nearest(S.R,c,S.lastIdx).along; }
       else { f.off=null; f.ahead=true; } });
-    // driving: places on or near the route and ahead of you first (smallest detour), Amap-style
+    // driving: places on or near the route and ahead of you first (smallest detour)
     list.sort((a,b)=> S.nav&&!center ? ((b.ahead-a.ahead) || (a.off-b.off) || (a.d-b.d)) : a.d-b.d);
     list=list.slice(0,15);
+    if(S.voicePick && S.nav && list.length){ S.voicePick=false; say((S.lang==="ms"?"Menambah hentian: ":S.lang==="zh"?"添加途经点：":"Adding a stop: ")+list[0].name); closeSheet(); choosePlace(list[0],k); return; }
+    S.voicePick=false;
     if(!list.length){ if(!S.nav && !center && rr<15000) return openPlaces(k, null, 15000); return fail("Nothing found "+esc(near)+"."); }
     clearFuel(); if(!S.nav) showCircle(c, rr);
     list.forEach(f=>{ const m=pin("fuelpin",f,cat.ico); m.getElement().onclick=ev=>{ ev.stopPropagation(); choosePlace(f,k); }; S.fuelMarkers.push(m); });
@@ -1925,7 +2035,7 @@ function tourRow(x, i, fromAlong){
   const t=x.cat==="wiki"?TCAT("wiki"):TOUR[x.cat];
   const at=(fromAlong!=null? (x.along-fromAlong>0?"in "+fmtDist(x.along-fromAlong):"behind you") : "at "+fmtDist(x.along))+" · on your "+(x.left?"left":"right")+(x.off>60?" · "+fmtDist(x.off)+" off the route":"");
   return '<button class="tli" data-ti="'+i+'"><span class="th" style="'+(x.thumb?'background-image:url(\''+esc(x.thumb)+'\')':'')+'">'+(x.thumb?'':t.ico)+'</span><span class="tx">'+
-    '<b>'+esc(x.name)+'</b><span class="bl">'+(x.rec?'<span class="tag rec">⭐ '+esc(x.recWhy||"recommended")+'</span> ':'')+esc(x.blurb||x.sub||t.label)+'</span><span class="at">'+t.ico+' '+at+'</span></span></button>';
+    '<b>'+esc(x.name)+'</b><span class="bl">'+(x.rec?'<span class="tag rec">⭐ '+esc(x.recWhy||"recommended")+'</span> ':'')+esc(x.blurb||x.sub||t.label)+'</span>'+(x.blurb&&x.url?'<span class="bl" style="font-size:11px">Text: Wikipedia, CC BY-SA</span>':'')+'<span class="at">'+t.ico+' '+at+'</span></span></button>';
 }
 function openTourSheet(Rt, cat, back){
   if(!Rt) return;
@@ -1938,7 +2048,7 @@ function openTourSheet(Rt, cat, back){
     '<div class="ncats">'+TOUR_ORDER.filter(k=>c[k]).map(k=>{ const t=TCAT(k); return '<button class="ncat'+(k===sel?' on':'')+'" style="--c:'+t.c+'" data-tcat="'+k+'">'+t.ico+' '+t.label+' <b>'+c[k]+'</b></button>'; }).join("")+'</div>';
   if(sel==="rec") h+='<p class="hint" style="margin:0 0 6px">⭐ Recommended = places with a Wikipedia entry, or well-known Malaysian food spots matched by name. Free map data has no star ratings.</p>';
   h+='<div class="list">'+(shown.length?shown.map((x,i)=>tourRow(x,i,fromAlong)).join(""):'<p class="hint">Nothing in this category ahead of you.</p>')+'</div>'+
-    '<div class="row"><button class="btn" id="tBack">Back</button></div><p class="hint">Places © OpenStreetMap contributors · landmarks and photos from Wikipedia.</p>';
+    '<div class="row"><button class="btn" id="tBack">Back</button></div><p class="hint">Places © OpenStreetMap contributors (ODbL) · landmark text and photos from Wikipedia and Wikimedia Commons (CC BY-SA 4.0).</p>';
   openSheet(h);
   wireTourBox(Rt, back);
   document.querySelectorAll("#sheet .tli").forEach(b=>b.onclick=()=>showTourPlace(shown[+b.dataset.ti], Rt));
@@ -1947,7 +2057,7 @@ function openTourSheet(Rt, cat, back){
 function placePopup(x, ico, extraBtns){
   const d=document.createElement("div"); d.className="pop";
   d.innerHTML=(x.thumb?'<img src="'+esc(x.thumb)+'" alt="" style="width:100%;max-width:230px;height:110px;object-fit:cover;border-radius:10px;display:block;margin-bottom:6px">':'')+
-    '<b>'+ico+' '+esc(x.name)+'</b>'+(x.rec?' <span class="tag rec">⭐</span>':'')+'<div class="m">'+esc(x.blurb||x.sub||"")+(S.pos?'<br>'+fmtDist(hav(S.pos,x))+' away':'')+(x.url?' · <a href="'+esc(x.url)+'" target="_blank" rel="noopener">Wikipedia</a>':'')+'</div>'+
+    '<b>'+ico+' '+esc(x.name)+'</b>'+(x.rec?' <span class="tag rec">⭐</span>':'')+'<div class="m">'+esc(x.blurb||x.sub||"")+(S.pos?'<br>'+fmtDist(hav(S.pos,x))+' away':'')+(x.url?' · <a href="'+esc(x.url)+'" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA)':'')+'</div>'+
     '<div class="row"><button class="btn sm" data-a="go">'+(S.nav||S.dest?'Add as stop':'Go here')+'</button>'+(extraBtns||'')+'</div>';
   const pop=new maplibregl.Popup({offset:20, closeButton:true, maxWidth:"260px"}).setLngLat(ll(x)).setDOMContent(d).addTo(map);
   d.querySelector('[data-a="go"]').onclick=()=>{ pop.remove(); const p={name:x.name, sub:x.sub||"", lat:x.lat, lng:x.lng};
@@ -2245,7 +2355,7 @@ function paintPlanner(){
         '<a class="btn sm" target="_blank" rel="noopener" style="text-decoration:none;color:inherit" href="'+esc(calLink(o))+'">📅 Calendar</a><button class="btn sm" data-mshare="'+i+'">Share</button></div></div>';
     }
   });
-  h+='</div><p class="hint">'+(S.ttKey?'Car and motorcycle times use TomTom traffic'+(P.when==="now"?'':' predicted for that time')+'. ':'Car and motorcycle times are typical traffic. ')+'Public transport uses timetables; fares are estimates. The recommendation weighs time, changes, walking, fares and parking.</p>';
+  h+='</div><p class="hint">'+(S.ttKey?'Car and motorcycle times use TomTom traffic'+(P.when==="now"?'':' predicted for that time')+'. ':'Car and motorcycle times are typical traffic. ')+'Public transport uses <a href="https://transitous.org/sources/" target="_blank" rel="noopener">Transitous timetables</a>; fares are estimates. The recommendation weighs time, changes, walking, fares and parking.</p>';
   box.innerHTML=h;
   box.querySelectorAll("[data-mc]").forEach(b=>b.onclick=()=>{ const o=r.opts[+b.dataset.mc]; r.open = r.open===o.key ? null : o.key; paintPlanner(); });
   box.querySelectorAll("[data-mshow]").forEach(b=>b.onclick=()=>showPlannedOnMap(b.dataset.mshow));
@@ -2276,8 +2386,8 @@ function showPlannedOnMap(key){
   setTravelMode(key); setDest({name:r.to.name, sub:r.to.sub||"", lat:r.to.lat, lng:r.to.lng}, false);
 }
 
-/* ---------------- points (Waze-style) ---------------- */
-const LEVELS=[[0,"Learner"],[100,"Road Scout"],[500,"Traffic Hero"],[2000,"Highway Legend"],[10000,"Waveguide Royalty"]];
+/* ---------------- points ---------------- */
+const LEVELS=[[0,"Learner"],[100,"Road Scout"],[500,"Traffic Hero"],[2000,"Highway Legend"],[10000,"Panduan Legend"]];
 function levelOf(p){ let l=LEVELS[0]; LEVELS.forEach(x=>{ if(p>=x[0]) l=x; }); return l; }
 function nextLevel(p){ return LEVELS.find(x=>x[0]>p); }
 function addPoints(n){ const before=levelOf(S.points)[1]; S.points+=n; store.set("points",S.points); const after=levelOf(S.points)[1];
@@ -2289,11 +2399,12 @@ const Live = {
   code:null, timer:null,
   async start(){
     if(!Sync.base()){ toast("Live location uses the shared database. Add it in Settings first."); openSettings(); return null; }
-    this.code = this.code || Math.random().toString(36).slice(2,8).toUpperCase();
+    if(!this.code){ const abc="ABCDEFGHJKMNPQRSTUVWXYZ23456789", r=new Uint8Array(12); crypto.getRandomValues(r); this.code=[...r].map(x=>abc[x%abc.length]).join(""); this.started=Date.now(); }
     await this.push(); clearInterval(this.timer); this.timer=setInterval(()=>this.push(),10000); return this.code;
   },
   async push(){ if(!this.code || !S.pos) return;
-    const body={name:(S.myName||"Waveguide driver").slice(0,40), lat:+S.pos.lat.toFixed(6), lng:+S.pos.lng.toFixed(6), heading:Math.round(S.heading||0),
+    if(Date.now()-(this.started||0) > 8*3600e3){ this.stop(); toast("Live location sharing ended after 8 hours."); return; } /* never share forever */
+    const body={name:(S.myName||"Panduan driver").slice(0,40), lat:+S.pos.lat.toFixed(6), lng:+S.pos.lng.toFixed(6), heading:Math.round(S.heading||0),
       speed:Math.round((S.speed||0)*3.6), t:Date.now(), dest:S.dest?{name:String(S.dest.name).slice(0,80)}:null, eta:S.nav&&S.lastLeft?Math.round(Date.now()+S.lastLeft*1000):null};
     try{ await fetch(Sync.base()+"/live/"+this.code+".json",{method:"PUT", body:JSON.stringify(body)}); }catch(e){} },
   async stop(){ clearInterval(this.timer); this.timer=null; const c=this.code; this.code=null;
@@ -2304,8 +2415,8 @@ const Follow = {
   codes:store.get("follow",[]), db:store.get("followDb",""), markers:{}, data:{}, timer:null,
   base(){ return DBRE.test(this.db) ? this.db : Sync.base(); },
   add(code, db){
-    code=String(code||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,8);
-    if(code.length<4){ toast("That code looks too short."); return; }
+    code=String(code||"").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,16);
+    if(code.length<10){ toast("That code looks too short. Codes have 12 letters and numbers."); return; }
     if(db){ const u="https://"+String(db).replace(/^https?:\/\//,"").replace(/\/+$/,""); if(DBRE.test(u)){ this.db=u; store.set("followDb",u); } }
     if(!this.base()){ toast("Following needs the same shared database as your friend. Open the link they sent."); return; }
     if(!this.codes.includes(code)) this.codes.push(code); store.set("follow",this.codes);
@@ -2317,7 +2428,7 @@ const Follow = {
     for(const c of this.codes){ try{ this.show(c, await (await fetch(b+"/live/"+c+".json")).json()); }catch(e){} }
     renderFriends(); },
   show(c, v){
-    if(!v || !isFinite(+v.lat) || !isFinite(+v.lng)){ this.markers[c]?.remove(); delete this.markers[c]; this.data[c]=null; return; }
+    if(!v || !isFinite(+v.lat) || !isFinite(+v.lng) || Date.now()-(+v.t||0) > 2*3600e3){ /* stale shares end */ this.markers[c]?.remove(); delete this.markers[c]; this.data[c]=null; return; }
     const d={name:String(v.name||"Friend").slice(0,40), lat:+v.lat, lng:+v.lng, heading:+v.heading||0, speed:+v.speed||0, t:+v.t||0,
       dest:v.dest&&v.dest.name?String(v.dest.name).slice(0,80):"", eta:+v.eta||0};
     this.data[c]=d;
@@ -2346,7 +2457,7 @@ function openShareSheet(){
     '</div><div class="row"><button class="btn" id="cl">Close</button></div>');
   if($("shEta")) $("shEta").onclick=()=>{ shareTrip(S.nav); afterSheet(); };
   $("shLive").onclick=async()=>{ const c=await Live.start(); if(!c) return;
-    const text=(S.myName||"I")+(S.myName?" is":" am")+" sharing live location on Waveguide"+(S.dest?" on the way to "+S.dest.name:"")+". Code "+c+".";
+    const text=(S.myName||"I")+(S.myName?" is":" am")+" sharing live location on Panduan"+(S.dest?" on the way to "+S.dest.name:"")+". Code "+c+".";
     try{ if(navigator.share){ await navigator.share({title:"Live location", text, url:Live.link()}); afterSheet(); return; } }catch(e){ if(e.name==="AbortError"){ afterSheet(); return; } }
     try{ await navigator.clipboard.writeText(text+" "+Live.link()); toast("Live link copied. Paste it to your friends."); }catch(e){ toast("Code "+c); }
     afterSheet(); };
@@ -2399,6 +2510,8 @@ function listen(){
 function go(place){ if(S.nav){ S.dest=place; S.stops=[]; destMarker?.remove(); destMarker=pin("destpin",place); S.lastReroute=0; reroute(S.pos||S.R.pts[S.lastIdx]); } else setDest(place); }
 async function runCommand(raw){
   const t=raw.toLowerCase().trim();
+  if(/(faster route|switch route|take (the )?faster|laluan (lebih )?pantas|tukar laluan|更快|切换路线)/.test(t)){ if(!takeBetter()) toast("No faster route on offer right now."); return; }
+  if(S.lockOn && CMD_NEAR.some(([,re])=>re.test(t))) S.voicePick=true; // hands-free: add the best one as a stop
   if(/(report|lapor|报告|举报)/.test(t)){ const hit=CMD_HZ.find(([,re])=>re.test(t)); if(hit) makeReport(hit[0]); else openReport(); return; }
   if(/(unmute|voice on|hidupkan suara|开启语音|取消静音)/.test(t)){ S.voice=true; store.set("voice",true); paintVoice(); say("Voice on"); return; }
   if(/^(mute|senyap|diam|静音|关闭语音)/.test(t)){ S.voice=false; store.set("voice",false); paintVoice(); toast("Voice muted"); return; }
@@ -2456,7 +2569,7 @@ function openPlan(){
     '<div class="sec">Leave by</div><div class="plan-leave" id="planLeave">--:--</div><p class="hint" id="planNote" style="margin-top:2px"></p>'+
     '<div class="row"><button class="btn go" id="planSave">Remind me</button></div>'+
     '<div class="row"><a class="btn sm" id="planCal" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">📅 Add to Google Calendar</a><button class="btn sm" id="planBack">Back to routes</button></div>'+
-    '<p class="hint">The reminder shows while Waveguide is open. The calendar event reminds you even when it is closed.</p>');
+    '<p class="hint">The reminder shows while Panduan is open. The calendar event reminds you even when it is closed.</p>');
   let plan=null;
   const calc=async()=>{
     const arrive=new Date($("planAt").value).getTime(); if(!isFinite(arrive)) return;
@@ -2466,7 +2579,7 @@ function openPlan(){
     $("planLeave").textContent=dayTime(leave); $("planNote").textContent=note+(leave<Date.now()?" That's already past, so leave now.":"");
     plan={id:Date.now().toString(36), dest:{name:S.dest.name, sub:S.dest.sub, lat:S.dest.lat, lng:S.dest.lng}, arrive, leave, mode:S.mode};
     $("planCal").href="https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent("Drive to "+S.dest.name)+
-      "&dates="+gcalStamp(leave)+"/"+gcalStamp(arrive)+"&details="+encodeURIComponent("Leave by "+clock(new Date(leave))+" to arrive by "+clock(new Date(arrive))+". Open Waveguide to navigate.")+
+      "&dates="+gcalStamp(leave)+"/"+gcalStamp(arrive)+"&details="+encodeURIComponent("Leave by "+clock(new Date(leave))+" to arrive by "+clock(new Date(arrive))+". Open Panduan to navigate.")+
       "&location="+encodeURIComponent(S.dest.lat.toFixed(6)+","+S.dest.lng.toFixed(6));
   };
   $("planAt").onchange=calc; calc();
@@ -2524,12 +2637,15 @@ function openSettings(){
     block('Shared database','Firebase Realtime Database URL. Shares reports and lets friends follow your live location. Leave empty to keep everything on this phone.',
       '<input class="field" id="setSync" type="url" inputmode="url" placeholder="https://your-project-default-rtdb.asia-southeast1.firebasedatabase.app" value="'+esc(S.syncUrl)+'">')+
     block('Your name','Shown to friends when you share live location','<input class="field" id="setName" type="text" maxlength="40" placeholder="e.g. William" value="'+esc(S.myName)+'">')+
-    block('Follow a friend','Enter the code from their live location link','<div class="row" style="margin-top:8px"><input class="field" id="setFollow" type="text" maxlength="8" placeholder="Code" style="margin:0;flex:1;text-transform:uppercase"><button class="btn sm" id="setFollowBtn">Follow</button></div>')+
+    block('Follow a friend','Enter the code from their live location link','<div class="row" style="margin-top:8px"><input class="field" id="setFollow" type="text" maxlength="16" placeholder="12-character code" style="margin:0;flex:1;text-transform:uppercase"><button class="btn sm" id="setFollowBtn">Follow</button></div>')+
     follows+
     '<div class="sec">Data</div>'+
     row('Clear history','Recent places, Home, Work and planned drives', '<button class="btn sm warn" id="setClear">Clear</button>')+
     '</div><div class="row"><button class="btn" id="setDone">Done</button></div>'+
-    '<p class="hint">Map © OpenStreetMap contributors · OpenFreeMap · Routing OSRM & Valhalla (FOSSGIS) · Search Photon · Places Overpass · Traffic © TomTom · Imagery © Esri</p>');
+    '<div class="sec">Legal</div>'+
+    '<div class="list">'+[["terms.html","📄 Terms of use"],["privacy.html","🔒 Privacy policy"],["LICENSE","⚖️ Open-source licence (MIT)"],["https://transitous.org/sources/","🚇 Public transport timetable sources"],["https://www.openstreetmap.org/copyright","🗺️ OpenStreetMap copyright"]]
+      .map(([u,l])=>'<a class="li" href="'+u+'" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="tx"><b>'+l+'</b></span><span>›</span></a>').join("")+'</div>'+
+    '<p class="hint">Map © OpenStreetMap contributors · OpenFreeMap · Routing OSRM & Valhalla (FOSSGIS) · Search Photon · Places Overpass · Public transport Transitous · Traffic © TomTom · Landmarks Wikipedia & Wikimedia Commons (CC BY-SA) · Street photos Mapillary (CC BY-SA)</p>');
   const segBind=(id,fn)=>$(id).querySelectorAll("button").forEach(b=>b.onclick=()=>{ $(id).querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b)); fn(b.dataset.v); });
   const swBind=(id,fn)=>{ if(!$(id)) return; $(id).onclick=()=>{ const on=!$(id).classList.contains("on"); $(id).classList.toggle("on",on); $(id).setAttribute("aria-checked",on); fn(on); }; };
   segBind("setAppMode",v=>setAppMode(v));
@@ -2561,7 +2677,7 @@ function openMapTypes(){
   Object.entries(MAPTYPES).forEach(([k,v])=> h+='<button class="mt'+(k===S.mapType?' on':'')+'" data-mt="'+k+'"><span class="mtsw mt-'+k+'">'+v.ico+'</span>'+v.label+'</button>');
   h+='</div>'+(S.ttKey?'<div class="li" style="margin-top:10px"><span class="tx"><b>🚦 Live traffic</b><span>Green, orange and red roads from TomTom</span></span><button class="sw'+(S.traffic?' on':'')+'" id="mtTraffic" role="switch" aria-checked="'+S.traffic+'"></button></div>':
      '<p class="hint">Add a free TomTom key in Settings to see live traffic colours.</p>')+
-     '<p class="hint">Landmarks shows more shops, malls, mosques, temples, hospitals and petrol stations. Satellite imagery © Esri.</p>';
+     '<p class="hint">Landmarks shows more shops, malls, mosques, temples, hospitals and petrol stations.</p>';
   openSheet(h);
   if($("mtTraffic")) $("mtTraffic").onclick=()=>{ const on=!S.traffic; setTraffic(on); $("mtTraffic").classList.toggle("on",on); };
   document.querySelectorAll("[data-mt]").forEach(b=>b.onclick=()=>{ setMapType(b.dataset.mt); afterSheet(); });
@@ -2581,13 +2697,13 @@ $("voiceBtn").onclick=()=>{ S.voice=!S.voice; store.set("voice",S.voice); paintV
 /* ---------------- boot ---------------- */
 // keep buttons and map padding in step with the sheet whenever its content changes height
 if("ResizeObserver" in window) new ResizeObserver(()=>{ if(!$("sheet").classList.contains("closed")) setSheetVar(sheetH()); }).observe($("sheet"));
-paintVoice(); renderChips(); paintTSwitch(); loadReports(); startGPS();
+paintVoice(); renderChips(); paintTSwitch(); loadReports(); legalGate(startGPS);
 setInterval(loadReports, 30000);
 setInterval(()=>{ if(S.ttKey) loadIncidents().then(()=>{ if(S.nav) buildProgress(); }); }, 300000);
 setInterval(checkPlans, 60000); setTimeout(checkPlans, 3000);
 if(S.ttKey) setTimeout(loadIncidents, 2500);
 // open a friend's live-location link: #follow=CODE&db=host
-(function(){ const h=location.hash.slice(1); const m=h.match(/^follow=([A-Za-z0-9]{4,8})(?:&db=([^&]+))?/);
+(function(){ const h=location.hash.slice(1); const m=h.match(/^follow=([A-Za-z0-9]{10,16})(?:&db=([^&]+))?/);
   if(m){ Follow.add(m[1], m[2]?decodeURIComponent(m[2]):""); try{ history.replaceState(null,"",location.pathname); }catch(e){} }
   Follow.start(); if(Follow.codes.length) Follow.poll(); })();
 if("serviceWorker" in navigator && location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
